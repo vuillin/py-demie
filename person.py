@@ -167,18 +167,29 @@ class Person:
     def draw(self, screen):
         cx, cy = int(self.x), int(self.y)
 
-        # Corps
+        # 1. Corps
         pygame.draw.circle(screen, self.color, (cx, cy), self.radius)
 
+        # 2. Croix pour fragile
         if self.is_fragile:
-            step = 3  # espacement des hachures
-            for dx in range(-self.radius, self.radius, step):
-                for dy in range(-self.radius, self.radius, step):
-                    x = cx + dx
-                    y = cy + dy
+            cross_color = WHITE
+            cross_size = self.radius - 2  # reste bien à l'intérieur
+            width = 1
 
-                    # Vérifie si le point est dans le cercle
-                    if dx*dx + dy*dy <= self.radius*self.radius:
-                        # motif diagonale
-                        if (dx + dy) % 6 == 0:
-                            screen.set_at((x, y), RED)
+            # Ligne verticale
+            pygame.draw.line(
+                screen,
+                cross_color,
+                (cx, cy - cross_size),
+                (cx, cy + cross_size),
+                width
+            )
+
+            # Ligne horizontale
+            pygame.draw.line(
+                screen,
+                cross_color,
+                (cx - cross_size, cy),
+                (cx + cross_size, cy),
+                width
+            )
