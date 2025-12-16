@@ -164,32 +164,24 @@ class Person:
         self.move()
 
 
-    def draw(self, screen):
-        cx, cy = int(self.x), int(self.y)
+    def draw(self, screen, zoom, pan_x, pan_y):
+        # Calcul de la position à l'écran avec le zoom
+        cx = int(self.x * zoom + pan_x)
+        cy = int(self.y * zoom + pan_y)
+        
+        # Le rayon change aussi avec le zoom (min 2 pixels pour qu'on les voie toujours)
+        screen_radius = int(max(2, self.radius * zoom))
 
-        # 1. Corps
-        pygame.draw.circle(screen, self.color, (cx, cy), self.radius)
-
-        # 2. Croix pour fragile
+        # 1. Dessiner le corps
+        pygame.draw.circle(screen, self.color, (cx, cy), screen_radius)
+        
+        # 2. Cercle intérieur pour fragile (TON STYLE)
         if self.is_fragile:
-            cross_color = WHITE
-            cross_size = self.radius - 2  # reste bien à l'intérieur
-            width = 1
-
-            # Ligne verticale
-            pygame.draw.line(
-                screen,
-                cross_color,
-                (cx, cy - cross_size),
-                (cx, cy + cross_size),
-                width
-            )
-
-            # Ligne horizontale
-            pygame.draw.line(
-                screen,
-                cross_color,
-                (cx - cross_size, cy),
-                (cx + cross_size, cy),
-                width
-            )
+            # On calcule la taille du point blanc en fonction du zoom
+            inner_radius = screen_radius // 2
+            
+            # Sécurité : on s'assure qu'il fait au moins 1 pixel pour être visible
+            if inner_radius < 1: 
+                inner_radius = 1
+                
+            pygame.draw.circle(screen, WHITE, (cx, cy), inner_radius)
