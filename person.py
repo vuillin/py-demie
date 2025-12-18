@@ -38,7 +38,7 @@ class Person:
 
         # Mouvement
         self.target = (x, y)
-        self.base_speed = random.uniform(2, 4)
+        self.base_speed = BASE_WALK_SPEED + random.uniform(-0.2, 0.2)
         self.speed = self.base_speed # Vitesse actuelle
         self.wandering_target = None # pour se balader un peu
     
@@ -80,7 +80,7 @@ class Person:
                         ry = random.randint(self.city_rect.top + 10, self.city_rect.bottom - 10)
                         self.target = (rx, ry)
                         self.wandering_target = True 
-                        self.stay_tonight = (random.random() < 0.05)
+                        self.stay_tonight = (random.random() < 0.1)
             
             else:
                 # --- Logique Sans Emploi ---
@@ -159,9 +159,21 @@ class Person:
             self.wanders_locally_today = False
 
     
-    def update(self, hour):
-        self.update_behavior(hour)
-        self.move()
+    def update(self, hour, game_speed_multiplier):
+
+            self.update_behavior(hour)
+
+            real_speed = (self.base_speed + random.uniform(-0.5, 0.5)) * game_speed_multiplier
+
+            # Calcul de la distance vers la cible
+            dx = self.target[0] - self.x
+            dy = self.target[1] - self.y
+            dist = math.hypot(dx, dy)
+
+            if dist > 0:
+                move_dist = min(dist, real_speed)
+                self.x += (dx / dist) * move_dist
+                self.y += (dy / dist) * move_dist
 
 
     def draw(self, screen, zoom, pan_x, pan_y):
