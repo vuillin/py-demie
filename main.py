@@ -70,6 +70,15 @@ while running:
         # Clics (Boutons ou Pan)
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
+
+                # --- AJOUT TEMPORAIRE ---
+                # Affiche les coordonnées "monde" (en tenant compte du pan et du zoom)
+                mouse_x, mouse_y = pygame.mouse.get_pos()
+                world_x = int((mouse_x - pan_x) / zoom)
+                world_y = int((mouse_y - pan_y) / zoom)
+                print(f"({world_x}, {world_y}),") # Affiche formaté prêt à copier
+                # ------------------------
+
                 mouse_pos = pygame.mouse.get_pos()
                 if btn_slow.collidepoint(mouse_pos):
                     game_speed = max(0.5, game_speed - 0.5)
