@@ -23,7 +23,11 @@ C_DARK  = (50, 50, 60)
 C_RED   = (180, 60, 60)
 C_BLUE  = (100, 180, 220) # Pour les vitres
 C_WOOD  = (100, 70, 40)   # Pour les portes
-HOUSE_SIZE = 12 
+HOUSE_SIZE = 14 
+
+# --- DECOR HERBE ---
+C_GRASS_1 = (120, 160, 120)
+C_GRASS_2 = (110, 150, 110)
 
 # --- SUPERMARCHÉ ---
 C_SM_WALL = (100, 120, 140)  
@@ -36,10 +40,10 @@ C_SM_SHELF = (60, 80, 100)
 C_SM_PRODUCT = (200, 200, 200)
 C_SM_CHECKOUT = (40, 40, 40)  
 C_SM_DESK = (180, 180, 190)   
-SM_SIZE = (140, 90) 
+SM_SIZE = (220, 140) 
 
 # --- CENTRE MÉDICAL ---
-MC_SIZE = (100, 70)          
+MC_SIZE = (160, 110)          
 C_MC_FLOOR = (255, 255, 255)
 C_MC_FLOOR_ALT = (240, 240, 240)
 C_MC_WALL = (150, 160, 170)   
@@ -58,11 +62,28 @@ C_SC_WATER = (30, 144, 255)
 C_SC_LANE = (100, 180, 255)     
 C_SC_SEATS = (100, 100, 120)    
 
-# --- ARBRES ---
-TREE_RADIUS_MIN = 6
-TREE_RADIUS_MAX = 10
-C_TREE_DARK = (30, 100, 30) 
-C_TREE_LIGHT = (50, 160, 50) 
+# --- VÉGÉTATION ---
+# Arbre Type 1 (Classique - Feuillu)
+TREE_1_RADIUS = 10
+C_TREE_1_MAIN = (34, 139, 34)   
+C_TREE_1_LIGHT = (50, 205, 50)  
+
+# Arbre Type 2 (Sombre - Type Pin/Sapin)
+TREE_2_RADIUS = 9
+C_TREE_2_MAIN = (47, 79, 79)   
+C_TREE_2_LIGHT = (85, 107, 47)  
+
+# Buissons
+BUSH_RADIUS = 5
+C_BUSH_MAIN = (100, 180, 40)    
+C_BUSH_LIGHT = (140, 220, 80)
+
+# Parterre de Fleurs
+FLOWERBED_SIZE = (24, 12)      
+C_SOIL = (100, 70, 40)         
+C_FLOWER_RED = (200, 50, 50)
+C_FLOWER_YEL = (220, 220, 50)
+C_FLOWER_PRP = (150, 50, 150)
 
 # Paramètres de la simulation 
 POPULATION_SIZE = 213
