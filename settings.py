@@ -86,7 +86,7 @@ C_FLOWER_YEL = (220, 220, 50)
 C_FLOWER_PRP = (150, 50, 150)
 
 # --- BOSQUETS (Groupes d'arbres) ---
-GROVE_TREE_COUNT = 8     
+GROVE_TREE_COUNT = 6 
 GROVE_SPREAD = 20      
 
 # Paramètres de la simulation 
