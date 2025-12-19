@@ -15,7 +15,6 @@ class Map:
         )
         
         # Listes de données
-        self.roads = []
         self.city_elements = []
         self.houses = []
         self.house_slots = [] 
@@ -25,6 +24,7 @@ class Map:
         self.manual_trees_2 = []   
         self.manual_bushes = [] 
         self.manual_flowers = []
+        self.grove_trees = []
         
         self.supermarket = None
         self.medical_center = None
@@ -32,7 +32,6 @@ class Map:
         
         # 2. Générations
         self._generate_grass()
-        self._generate_roads()
         self._generate_city_architecture()
         self._generate_fixed_supermarket()
         self._generate_medical_center()
@@ -40,6 +39,7 @@ class Map:
 
         self._define_house_slots()
         self._define_vegetation_slots()
+        self._process_groves()
 
     
     def _generate_grass(self):
@@ -47,7 +47,7 @@ class Map:
         self.grass_tiles = []
         
         # Taille fixe pour tous les carrés (60px est un bon équilibre)
-        tile_size = 60 
+        tile_size = 20
         
         # On calcule combien de carrés il faut pour remplir la largeur et hauteur
         # On ajoute +1 pour être sûr de couvrir les bords si la division n'est pas ronde
@@ -70,23 +70,6 @@ class Map:
                 # On crée le rectangle
                 rect = pygame.Rect(x, y, tile_size, tile_size)
                 self.grass_tiles.append({"rect": rect, "color": color})
-
-    def _generate_roads(self):
-        BLOCK_SIZE_MAP = 120  
-        ROAD_WIDTH = 12   
-        margin = 20
-        self.roads.append(pygame.Rect(0, self.city_rect.top - margin, self.width, 16))
-        self.roads.append(pygame.Rect(0, self.city_rect.bottom + margin - 16, self.width, 16))
-        self.roads.append(pygame.Rect(self.city_rect.left - margin, 0, 16, self.height))
-        self.roads.append(pygame.Rect(self.city_rect.right + margin - 16, 0, 16, self.height))
-        for x in range(0, self.width, BLOCK_SIZE_MAP):
-            offset = random.randint(-5, 5)
-            rect = pygame.Rect(x + offset, 0, ROAD_WIDTH, self.height)
-            if not rect.colliderect(self.city_rect): self.roads.append(rect)
-        for y in range(0, self.height, BLOCK_SIZE_MAP):
-            offset = random.randint(-5, 5)
-            rect = pygame.Rect(0, y + offset, self.width, ROAD_WIDTH)
-            if not rect.colliderect(self.city_rect): self.roads.append(rect)
 
     def _generate_city_architecture(self):
         block_count = 4
@@ -408,22 +391,74 @@ class Map:
         # 1. ARBRES TYPE 1 (Classiques)
         self.manual_trees_1 = [
             (275, 110), (275, 135), (275, 160), (275, 185),
+            
         ]
 
         # 2. ARBRES TYPE 2 (Pins / Sombres)
         self.manual_trees_2 = [
-            (600, 600), (620, 610), (610, 630),
+            
         ]
 
         # 3. BUISSONS (Petits cercles verts)
         self.manual_bushes = [
-            (100, 150), (110, 150),
+            
         ]
 
         # 4. PARTERRES DE FLEURS (Rectangles de terre colorés)
         self.manual_flowers = [
-            (500, 700),
+            
         ]
+
+        # 5. BOSQUETS
+        self.manual_groves_centers = [
+            (37, 141), (74, 128), (71, 177), (29, 180), 
+        ]
+
+    
+    def _process_groves(self):
+        """
+        Génère des bosquets style 'Parc' (Double cercle).
+        """
+        import math
+        
+        for (cx, cy) in self.manual_groves_centers:
+            spread_factor = 9 
+            angle_offset = 137.508 
+
+            for i in range(GROVE_TREE_COUNT):
+                # 1. Position (Spirale) - Inchangé
+                radius = spread_factor * math.sqrt(i)
+                theta = math.radians(i * angle_offset)
+                x = cx + radius * math.cos(theta)
+                y = cy + radius * math.sin(theta)
+
+                # 2. Taille
+                base_r = TREE_2_RADIUS
+                r = base_r + random.randint(-1, 2) 
+
+                # 3. Couleurs (Style Parc Nuancé)
+                # On calcule une variation aléatoire unique pour cet arbre
+                var = random.randint(-10, 10) 
+                
+                # Fonction locale pour appliquer la variation en restant dans les bornes 0-255
+                def apply_var(col, v):
+                    return (
+                        max(0, min(255, col[0] + v)),
+                        max(0, min(255, col[1] + v)),
+                        max(0, min(255, col[2] + v))
+                    )
+
+                # On applique la MEME variation au haut et au bas pour garder le contraste
+                col_top = apply_var(C_TREE_2_TOP, var)
+                col_base = apply_var(C_TREE_2_BASE, var)
+
+                self.grove_trees.append({
+                    "pos": (x, y),
+                    "radius": r,
+                    "color_top": col_top,   # Couleur du dessus
+                    "color_base": col_base  # Couleur du dessous (ombre)
+                })
+
 
     def draw(self, screen, zoom, pan_x, pan_y, label_font):
         # --- 1. OPTIMISATION : GESTION CAMÉRA ---
@@ -455,10 +490,6 @@ class Map:
             if r: 
                 pygame.draw.rect(screen, tile["color"], r)
 
-        # --- 3. ROUTES ---
-        for road in self.roads:
-            r = to_screen_rect(road)
-            if r: pygame.draw.rect(screen, ROAD_COLOR, r)
         
         # --- 4. VÉGÉTATION BASSE (FLEURS & BUISSONS) ---
         # Parterres de fleurs
@@ -571,17 +602,68 @@ class Map:
         for (tx, ty) in self.manual_trees_1:
             sx = int(tx * zoom + pan_x)
             sy = int(ty * zoom + pan_y)
-            # Optimisation simple (box)
+            
+            # Vérif écran
             if -50 < sx < screen_w + 50 and -50 < sy < screen_h + 50:
                 tr = int(TREE_1_RADIUS * zoom)
-                pygame.draw.circle(screen, C_TREE_1_MAIN, (sx, sy), tr)
-                pygame.draw.circle(screen, C_TREE_1_LIGHT, (sx - int(3*zoom), sy - int(3*zoom)), int(tr * 0.6))
+                
+                # ASTUCE : Variation de couleur basée sur la position (stable, ne clignote pas)
+                # On génère un nombre entre -15 et +15 qui dépend de x et y
+                var = ((tx * 7 + ty * 13) % 30) - 15
+                
+                # On applique cette nuance aux couleurs de base
+                # (On limite entre 0 et 255 pour pas planter)
+                def nuance(col, v):
+                    return (max(0, min(255, col[0] + v)), max(0, min(255, col[1] + v)), max(0, min(255, col[2] + v)))
+                
+                col_b = nuance(C_TREE_1_BASE, var)
+                col_t = nuance(C_TREE_1_TOP, var)
+
+                # 1. Base (Ombre) décalée
+                pygame.draw.circle(screen, col_b, (sx + int(1*zoom), sy + int(2*zoom)), tr)
+                
+                # 2. Haut (Feuillage) centré
+                pygame.draw.circle(screen, col_t, (sx, sy), tr)
             
         # Arbres Type 2 (Sombres)
         for (tx, ty) in self.manual_trees_2:
             sx = int(tx * zoom + pan_x)
             sy = int(ty * zoom + pan_y)
+            
             if -50 < sx < screen_w + 50 and -50 < sy < screen_h + 50:
                 tr = int(TREE_2_RADIUS * zoom)
-                pygame.draw.circle(screen, C_TREE_2_MAIN, (sx, sy), tr)
-                pygame.draw.circle(screen, C_TREE_2_LIGHT, (sx, sy - int(3*zoom)), int(tr * 0.5))
+                
+                # Astuce mathématique pour la nuance (sans clignotement)
+                # On varie un peu les chiffres (x5, x11) pour pas que ce soit identique aux Type 1
+                var = ((tx * 5 + ty * 11) % 30) - 15
+                
+                # Petite fonction locale pour appliquer la nuance
+                def nuance(col, v):
+                    return (max(0, min(255, col[0] + v)), max(0, min(255, col[1] + v)), max(0, min(255, col[2] + v)))
+                
+                # On utilise les couleurs définies pour le Type 2 (TOP et BASE)
+                col_b = nuance(C_TREE_2_BASE, var)
+                col_t = nuance(C_TREE_2_TOP, var)
+
+                # 1. Base (Ombre) décalée
+                pygame.draw.circle(screen, col_b, (sx + int(1*zoom), sy + int(2*zoom)), tr)
+                
+                # 2. Haut (Feuillage) centré
+                pygame.draw.circle(screen, col_t, (sx, sy), tr)
+
+        
+        # ARBRES DE BOSQUETS (Style Parc)
+        for tree in self.grove_trees:
+            tx, ty = tree["pos"]
+            sx = int(tx * zoom + pan_x)
+            sy = int(ty * zoom + pan_y)
+            
+            if -50 < sx < screen_w + 50 and -50 < sy < screen_h + 50:
+                tr = int(tree["radius"] * zoom)
+                
+                # 1. Le cercle de BASE (Ombre), légèrement décalé vers le bas-droite (+1, +2)
+                # C'est ça qui donne l'effet de volume
+                pygame.draw.circle(screen, tree["color_base"], (sx + int(1*zoom), sy + int(2*zoom)), tr)
+                
+                # 2. Le cercle du HAUT (Feuillage principal), centré
+                pygame.draw.circle(screen, tree["color_top"], (sx, sy), tr)

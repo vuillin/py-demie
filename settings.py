@@ -63,15 +63,15 @@ C_SC_LANE = (100, 180, 255)
 C_SC_SEATS = (100, 100, 120)    
 
 # --- VÉGÉTATION ---
-# Arbre Type 1 (Classique - Feuillu)
+# Arbre Type 1
 TREE_1_RADIUS = 10
-C_TREE_1_MAIN = (34, 139, 34)   
-C_TREE_1_LIGHT = (50, 205, 50)  
+C_TREE_1_TOP = (60, 180, 60)
+C_TREE_1_BASE = (30, 120, 30)
 
 # Arbre Type 2 (Sombre - Type Pin/Sapin)
-TREE_2_RADIUS = 9
-C_TREE_2_MAIN = (47, 79, 79)   
-C_TREE_2_LIGHT = (85, 107, 47)  
+TREE_2_RADIUS = 10
+C_TREE_2_TOP = (40, 100, 50)   
+C_TREE_2_BASE = (30, 80, 40) 
 
 # Buissons
 BUSH_RADIUS = 5
@@ -84,6 +84,10 @@ C_SOIL = (100, 70, 40)
 C_FLOWER_RED = (200, 50, 50)
 C_FLOWER_YEL = (220, 220, 50)
 C_FLOWER_PRP = (150, 50, 150)
+
+# --- BOSQUETS (Groupes d'arbres) ---
+GROVE_TREE_COUNT = 8     
+GROVE_SPREAD = 20      
 
 # Paramètres de la simulation 
 POPULATION_SIZE = 213
