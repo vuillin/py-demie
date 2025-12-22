@@ -2,6 +2,7 @@ import pygame
 from settings import *
 from person import Person
 from map import Map
+from navigation import NavigationGraph
 
 # Initialisation
 pygame.init()
@@ -16,6 +17,9 @@ font_label = pygame.font.SysFont("Arial", 15, bold=True)
 # 1. Génération de la Carte
 game_map = Map(WIDTH, HEIGHT, POPULATION_SIZE)
 
+# GPS (graphe)
+nav = NavigationGraph()
+
 # 2. Création de la Population
 population = []
 for _ in range(POPULATION_SIZE):
@@ -23,7 +27,7 @@ for _ in range(POPULATION_SIZE):
     x, y = game_map.get_valid_spawn_point()
     
     # On crée la personne
-    population.append(Person(x, y, game_map.city_rect))
+    population.append(Person(x, y, game_map.city_rect, nav))
     
     # On ajoute sa maison visuelle à cet endroit
     game_map.add_house(x, y)
@@ -121,6 +125,39 @@ while running:
     game_map.draw(screen, zoom, pan_x, pan_y, font_label) # On passe la font pour le supermarché
     for person in population:
         person.draw(screen, zoom, pan_x, pan_y)
+
+
+
+
+    # ==================================================
+    # --- DEBUG : AFFICHER LE RÉSEAU (Graphe) ---
+    # ==================================================
+    if True: # Mets False ici pour cacher le graphe sans supprimer le code
+        # 1. Dessiner les connexions (Lignes rouges)
+        for start_id, end_id in nav.connections:
+            # On récupère les positions réelles (x, y) des deux points
+            p1 = nav.nodes[start_id]
+            p2 = nav.nodes[end_id]
+            
+            # On applique le Zoom et le Pan (comme pour tout le reste)
+            s1 = (int(p1[0] * zoom + pan_x), int(p1[1] * zoom + pan_y))
+            s2 = (int(p2[0] * zoom + pan_x), int(p2[1] * zoom + pan_y))
+            
+            # On trace la ligne
+            pygame.draw.line(screen, (255, 0, 0), s1, s2, 2) 
+
+        # 2. Dessiner les noeuds (Points rouges)
+        for node_id, pos in nav.nodes.items():
+            sx = int(pos[0] * zoom + pan_x)
+            sy = int(pos[1] * zoom + pan_y)
+            pygame.draw.circle(screen, (255, 0, 0), (sx, sy), 5)
+            
+            # Afficher le nom du point
+            lbl = font_label.render(node_id, True, (0, 0, 0))
+            screen.blit(lbl, (sx, sy - 15))
+    # ==================================================
+
+
 
     # B. UI
     ui_bg = pygame.Surface((150, 60))

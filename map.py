@@ -482,6 +482,7 @@ class Map:
         screen_w, screen_h = screen.get_size()
         screen_bounds = pygame.Rect(0, 0, screen_w, screen_h)
 
+
         def to_screen_rect(rect):
             # Calcul de la position écran avec le zoom et le pan
             screen_x = int(rect.x * zoom + pan_x)
