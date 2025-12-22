@@ -7,11 +7,15 @@ class Map:
         self.width = width
         self.height = height
         
-        # 1. La Ville (Au centre)
-        self.city_size = 240
+        # 1. La Ville
+
+        self.city_w = 300 
+        self.city_h = 240
+        offset_y = 30
+
         self.city_rect = pygame.Rect(
-            (width // 2 - self.city_size // 2, height // 2 - self.city_size // 2), 
-            (self.city_size, self.city_size)
+            (width // 2 - self.city_w // 2, (height // 2 - self.city_h // 2) + offset_y), 
+            (self.city_w, self.city_h)
         )
         
         # Listes de données
@@ -24,7 +28,6 @@ class Map:
         self.manual_trees_2 = []   
         self.manual_bushes = [] 
         self.manual_flowers = []
-        self.grove_trees = []
         
         self.supermarket = None
         self.medical_center = None
@@ -39,7 +42,6 @@ class Map:
 
         self._define_house_slots()
         self._define_vegetation_slots()
-        self._process_groves()
 
     
     def _generate_grass(self):
@@ -72,48 +74,85 @@ class Map:
                 self.grass_tiles.append({"rect": rect, "color": color})
 
     def _generate_city_architecture(self):
-        block_count = 4
-        block_size = self.city_size // block_count
+        # On définit la grille : 5 colonnes (largeur) x 4 lignes (hauteur)
+        cols_count = 5
+        rows_count = 4
+        
+        # Taille d'un bloc (60px)
+        block_w = self.city_w // cols_count
+        block_h = self.city_h // rows_count
         padding = 5
-        for row in range(block_count):
-            for col in range(block_count):
-                bx = self.city_rect.x + (col * block_size)
-                by = self.city_rect.y + (row * block_size)
-                rect = pygame.Rect(bx + padding, by + padding, block_size - 2*padding, block_size - 2*padding)
+
+        for row in range(rows_count):
+            for col in range(cols_count):
+                bx = self.city_rect.x + (col * block_w)
+                by = self.city_rect.y + (row * block_h)
                 
-                if row in [0, 1] and col in [2, 3]: # Parc
-                    if row == 0 and col == 2:
-                        park_rect = pygame.Rect(bx + padding, by + padding, (block_size*2) - 2*padding, (block_size*2) - 2*padding)
+                # Le rectangle de base du bloc
+                rect = pygame.Rect(bx + padding, by + padding, block_w - 2*padding, block_h - 2*padding)
+                
+                # --- LOGIQUE DE ZONAGE (Décalée vers la droite pour laisser la col 0 en immeubles) ---
+                
+                # PARC (En haut à droite) -> Était cols 2,3 -> Devient cols 3,4
+                if row in [0, 1] and col in [3, 4]: 
+                    # On ne crée le parc qu'une seule fois, au début du bloc "maître" (row 0, col 3)
+                    if row == 0 and col == 3:
+                        # Le parc prend 2x2 blocs
+                        park_rect = pygame.Rect(bx + padding, by + padding, (block_w*2) - 2*padding, (block_h*2) - 2*padding)
+                        
                         park_details = {"trees": [], "pond": None, "paths": []}
                         pond_w, pond_h = park_rect.width // 2.5, park_rect.height // 3
                         park_details["pond"] = pygame.Rect(park_rect.x + park_rect.width*0.6, park_rect.y + park_rect.height*0.15, pond_w, pond_h)
+                        
+                        # Chemins en croix
                         park_details["paths"].append([(park_rect.left, park_rect.top), (park_rect.right, park_rect.bottom)])
                         park_details["paths"].append([(park_rect.right, park_rect.top), (park_rect.left, park_rect.bottom)])
+                        
+                        # Arbres du parc
                         for _ in range(40):
                             tx, ty = random.randint(park_rect.left + 5, park_rect.right - 5), random.randint(park_rect.top + 5, park_rect.bottom - 5)
-                            if not park_details["pond"].collidepoint(tx, ty): park_details["trees"].append((tx, ty))
+                            if not park_details["pond"].collidepoint(tx, ty): 
+                                park_details["trees"].append((tx, ty))
+                        
                         self.city_elements.append({"type": "park", "rect": park_rect, "color": (60, 160, 70), "details": park_details})
+                    
+                    # Si on est dans les autres cases du parc (0,4 ou 1,3 ou 1,4), on ne fait rien (le gros rect couvre tout)
                     continue 
-                elif row in [2, 3] and col in [0, 1]: # Plaza
-                    if row == 2 and col == 0:
+
+                # PLAZA (En bas, un peu à gauche mais pas tout au bord) -> Était cols 0,1 -> Devient cols 1,2
+                elif row in [2, 3] and col in [1, 2]: 
+                    if row == 2 and col == 1:
                         plaza_margin = 20
-                        plaza_rect = pygame.Rect(bx + plaza_margin, by + plaza_margin, (block_size*2) - 2*plaza_margin, (block_size*2) - 2*plaza_margin)
+                        plaza_rect = pygame.Rect(bx + plaza_margin, by + plaza_margin, (block_w*2) - 2*plaza_margin, (block_h*2) - 2*plaza_margin)
                         plaza_details = {"tiles": [], "fountain_center": plaza_rect.center}
+                        
+                        # Dallage
                         for tx in range(plaza_rect.left, plaza_rect.right, 10):
                             for ty in range(plaza_rect.top, plaza_rect.bottom, 10):
-                                if (tx + ty) % 20 == 0: plaza_details["tiles"].append(pygame.Rect(tx, ty, 9, 9))
+                                if (tx + ty) % 20 == 0: 
+                                    plaza_details["tiles"].append(pygame.Rect(tx, ty, 9, 9))
+                        
                         self.city_elements.append({"type": "plaza", "rect": plaza_rect, "color": (200, 190, 180), "details": plaza_details})
                     continue
-                else: # Immeubles
-                    shade = random.randint(40, 70) 
-                    color = (shade, shade, shade + 10)
+
+                # TOUT LE RESTE (Y compris la nouvelle colonne 0) -> IMMEUBLES
+                else: 
+                    v = random.randint(-20, 20)
+                    color = (
+                        max(0, min(255, C_BUILDING_BASE[0] + v)),
+                        max(0, min(255, C_BUILDING_BASE[1] + v)),
+                        max(0, min(255, C_BUILDING_BASE[2] + v + 10)) # Un peu bleuté
+                    )
+
                     windows = []
+                    # Génération des fenêtres (Inchangé)
                     for wx in range(rect.left + 4, rect.right - 4, 10):
                         for wy in range(rect.top + 4, rect.bottom - 4, 10):
                             if random.random() < 0.8:
-                                win_color = (20, 20, 30)
-                                if random.random() < 0.3: win_color = (200, 200, 100)
+                                win_color = (40, 40, 50) # Fenêtres sombres pour contraster
+                                if random.random() < 0.3: win_color = (255, 255, 200) # Lumière
                                 windows.append({"rect": pygame.Rect(wx, wy, 6, 6), "color": win_color})
+                    
                     self.city_elements.append({"type": "building", "rect": rect, "color": color, "details": {"windows": windows}})
 
     def _define_house_slots(self):
@@ -409,72 +448,6 @@ class Map:
             
         ]
 
-        # 5. BOSQUETS
-        self.manual_groves_centers = [
-            (37, 141), (74, 128), (71, 177), (29, 180), (19, 98), (2, 140), (67, 87),
-            (18, 60), (56, 56), (108, 50), (18, 20), (61, 18), (102, 14),    
-
-            (775, 16), (818, 16), (814, 55), (865, 18), (150, 5),(185, 7),(218, 4), 
-
-            (257, 7), (293, 34), (315, 9),(3, 287),(5, 262),(3, 223),(3, 194),
-
-            (9, 325), (25, 370), (8, 405), (22, 449), (62, 467), (108, 465), (51, 408), (94, 432),
-
-            (770, 629),(770, 659),(770, 702),(770, 738),(770, 775),(819, 659),(851, 679),(884, 703),
-            (899, 728),(914, 749),(927, 773),(959, 796),
-            (805, 681),(806, 710),(805, 738),(806, 768),(820, 794),
-            (849, 718),(855, 742),(869, 776),(887, 787),(727, 793),
-            (1001, 781),(1037, 781),(1075, 781),(1118, 779),(1153, 778),(966, 748),(1194, 783),(1187, 743),
-            (1181, 698),(1179, 660),(1178, 625),(1176, 579), (1129, 598),(1141, 638),
-            (1019, 737),(1055, 740),(1094, 735),(1133, 736), (947, 710),(1129, 695),(1130, 668),(1079, 698),
-            (1102, 562),(1091, 539),(1063, 503),(1097, 623),(1079, 656),(1028, 697),(1090, 590),
-        ]
-
-    
-    def _process_groves(self):
-        """
-        Génère des bosquets style 'Parc' (Double cercle).
-        """
-        import math
-        
-        for (cx, cy) in self.manual_groves_centers:
-            spread_factor = 9 
-            angle_offset = 137.508 
-
-            for i in range(GROVE_TREE_COUNT):
-                # 1. Position (Spirale) - Inchangé
-                radius = spread_factor * math.sqrt(i)
-                theta = math.radians(i * angle_offset)
-                x = cx + radius * math.cos(theta)
-                y = cy + radius * math.sin(theta)
-
-                # 2. Taille
-                base_r = TREE_2_RADIUS
-                r = base_r + random.randint(-1, 2) 
-
-                # 3. Couleurs (Style Parc Nuancé)
-                # On calcule une variation aléatoire unique pour cet arbre
-                var = random.randint(-10, 10) 
-                
-                # Fonction locale pour appliquer la variation en restant dans les bornes 0-255
-                def apply_var(col, v):
-                    return (
-                        max(0, min(255, col[0] + v)),
-                        max(0, min(255, col[1] + v)),
-                        max(0, min(255, col[2] + v))
-                    )
-
-                # On applique la MEME variation au haut et au bas pour garder le contraste
-                col_top = apply_var(C_TREE_2_TOP, var)
-                col_base = apply_var(C_TREE_2_BASE, var)
-
-                self.grove_trees.append({
-                    "pos": (x, y),
-                    "radius": r,
-                    "color_top": col_top,   # Couleur du dessus
-                    "color_base": col_base  # Couleur du dessous (ombre)
-                })
-
 
     def draw(self, screen, zoom, pan_x, pan_y, label_font):
         # --- 1. OPTIMISATION : GESTION CAMÉRA ---
@@ -574,21 +547,27 @@ class Map:
         # --- 7. VILLE CENTRALE ---
         city_r = to_screen_rect(self.city_rect)
         if city_r:
-            pygame.draw.rect(screen, (30, 30, 40), city_r) 
+            # 1. FOND CHANGÉ ICI (C_CITY_GROUND au lieu de (30, 30, 40))
+            pygame.draw.rect(screen, C_CITY_GROUND, city_r) 
+            
             for elem in self.city_elements:
                 r = to_screen_rect(elem["rect"])
                 if r: # Si l'élément de ville est visible
                     if elem["type"] == "building":
+                        # D'abord on remplit le bâtiment (sinon il est transparent)
+                        pygame.draw.rect(screen, elem["color"], r)
+                        
                         for win in elem["details"]["windows"]: 
                             wr = to_screen_rect(win["rect"])
                             if wr: pygame.draw.rect(screen, win["color"], wr)
                         
-                        pygame.draw.line(screen, (80, 80, 90), (r.left, r.top), (r.right, r.top), int(3 * zoom))
-                        pygame.draw.rect(screen, elem["color"], r, 1)
+                        pygame.draw.line(screen, (140, 140, 150), (r.left, r.top), (r.right, r.top), int(3 * zoom))
+                        # Contour léger du batiment
+                        pygame.draw.rect(screen, (100, 100, 100), r, 1)
                     else:
                          pygame.draw.rect(screen, elem["color"], r)
                     
-                    # Détails Parc
+                    # Détails Parc (Ton code d'origine inchangé)
                     if elem["type"] == "park":
                         for path in elem["details"]["paths"]:
                              p1 = (int(path[0][0]*zoom+pan_x), int(path[0][1]*zoom+pan_y))
@@ -601,7 +580,7 @@ class Map:
                             tr = int(5*zoom)
                             pygame.draw.circle(screen, (30, 80, 40), (tx+1, ty+2), tr)
                             pygame.draw.circle(screen, (40, 100, 50), (tx, ty), tr)
-                    # Détails Plaza
+                    # Détails Plaza (Ton code d'origine inchangé)
                     elif elem["type"] == "plaza":
                         for tile in elem["details"]["tiles"]: 
                             tr = to_screen_rect(tile)
@@ -611,8 +590,8 @@ class Map:
                         pygame.draw.circle(screen, (100, 100, 100), (cx, cy), int(12*zoom))
                         pygame.draw.circle(screen, (50, 150, 220), (cx, cy), int(10*zoom))
 
-            # Cadre Orange Ville
-            pygame.draw.rect(screen, ORANGE, city_r, max(1, int(2 * zoom)))
+            # 2. BORDURE CHANGÉE ICI (C_CITY_BORDER au lieu de ORANGE)
+            pygame.draw.rect(screen, C_CITY_BORDER, city_r, max(2, int(4 * zoom)))
 
         # --- 8. VÉGÉTATION HAUTE (ARBRES) ---
         # Arbres Type 1 (Verts)
@@ -667,20 +646,3 @@ class Map:
                 
                 # 2. Haut (Feuillage) centré
                 pygame.draw.circle(screen, col_t, (sx, sy), tr)
-
-        
-        # ARBRES DE BOSQUETS (Style Parc)
-        for tree in self.grove_trees:
-            tx, ty = tree["pos"]
-            sx = int(tx * zoom + pan_x)
-            sy = int(ty * zoom + pan_y)
-            
-            if -50 < sx < screen_w + 50 and -50 < sy < screen_h + 50:
-                tr = int(tree["radius"] * zoom)
-                
-                # 1. Le cercle de BASE (Ombre), légèrement décalé vers le bas-droite (+1, +2)
-                # C'est ça qui donne l'effet de volume
-                pygame.draw.circle(screen, tree["color_base"], (sx + int(1*zoom), sy + int(2*zoom)), tr)
-                
-                # 2. Le cercle du HAUT (Feuillage principal), centré
-                pygame.draw.circle(screen, tree["color_top"], (sx, sy), tr)

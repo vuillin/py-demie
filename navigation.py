@@ -5,28 +5,25 @@ class NavigationGraph:
     def __init__(self):
         # 1. DÉFINITION DES NOEUDS
         self.nodes = {
-            "A": (594, 281),
-            "B": (717, 417),
-            "C": (599, 518),
-            "D": (481, 400),
-            "E": (598, 262),
-            "F": (775, 263),
-            "G": (780, 398),
-            "H": (778, 544),
-            "I": (605, 551),
-            "J": (437, 549),
-            "K": (428, 381),
-            "L": (420, 261)
+            "A": (596, 311),
+            "B": (747, 431),
+            "C": (583, 548),
+            "D": (450, 432),
+            "E": (596, 282),
+            "F": (785, 282),
+            "G": (785, 431),
+            "H": (785, 573),
+            "I": (583, 573),
+            "J": (415, 573),
+            "K": (415, 432),
+            "L": (415, 282)
         }
 
         # 2. DÉFINITION DES CONNEXIONS 
-        # Format : ("Point1", "Point2")
         self.connections = [
-            # L'Anneau extérieur
             ("L", "E"), ("E", "F"), ("F", "G"), ("G", "H"),
             ("H", "I"), ("I", "J"), ("J", "K"), ("K", "L"),
             
-            # Les Rayons (Spokes) vers l'intérieur
             ("A", "E"), # Nord
             ("B", "G"), # Est
             ("C", "I"), # Sud
