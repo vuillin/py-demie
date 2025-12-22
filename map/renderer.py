@@ -38,6 +38,9 @@ def draw_map(game_map, screen, zoom, pan_x, pan_y, label_font):
         if r: 
             pygame.draw.rect(screen, tile["color"], r)
 
+    # --- 3. ROUTES ---
+    _draw_roads(game_map, screen, zoom, pan_x, pan_y, screen_bounds)
+
     
     # --- 4. VÉGÉTATION BASSE (FLEURS & BUISSONS) ---
     # Parterres de fleurs
@@ -195,3 +198,78 @@ def draw_map(game_map, screen, zoom, pan_x, pan_y, label_font):
             
             # 2. Haut (Feuillage) centré
             pygame.draw.circle(screen, col_t, (sx, sy), tr)
+
+
+def _draw_roads(game_map, screen, zoom, pan_x, pan_y, screen_bounds):
+    
+    # Largeurs ajustées au zoom
+    w_total = int(ROAD_WIDTH * zoom)
+    w_inner = int((ROAD_WIDTH - 2 * SIDEWALK_WIDTH) * zoom)
+    
+    # Si trop petit, on ne dessine pas les détails
+    if w_total < 2: return
+
+    # Pré-calcul des chemins visibles pour éviter de refaire la boucle
+    visible_paths = []
+    for path in game_map.roads:
+        screen_points = []
+        visible = False
+        for p in path:
+            sx = int(p[0] * zoom + pan_x)
+            sy = int(p[1] * zoom + pan_y)
+            screen_points.append((sx, sy))
+        
+        # Check rapid de visibilité (bounding box du path)
+        if not screen_points: continue
+        min_x = min(p[0] for p in screen_points)
+        max_x = max(p[0] for p in screen_points)
+        min_y = min(p[1] for p in screen_points)
+        max_y = max(p[1] for p in screen_points)
+        
+        if (max_x >= 0 and min_x <= screen.get_width() and
+            max_y >= 0 and min_y <= screen.get_height()):
+             if len(screen_points) >= 2:
+                visible_paths.append(screen_points)
+
+    def draw_layer(color, width):
+        half_w = width // 2
+        
+        for pts in visible_paths:
+            # 1. Dessiner les segments
+            for i in range(len(pts) - 1):
+                p1 = pts[i]
+                p2 = pts[i+1]
+                
+                # On détermine le rectangle du segment
+                # Si orthogonal (horizontal ou vertical), on utilise un Rect parfait
+                # ce qui évite les artefacts des "fat lines"
+                
+                if p1[0] == p2[0]: # Vertical
+                    top = min(p1[1], p2[1])
+                    height = abs(p1[1] - p2[1])
+                    # Le rect est centré en X sur p1[0]
+                    rect = pygame.Rect(p1[0] - half_w, top, width, height)
+                    pygame.draw.rect(screen, color, rect)
+                    
+                elif p1[1] == p2[1]: # Horizontal
+                    left = min(p1[0], p2[0])
+                    length = abs(p1[0] - p2[0])
+                    # Le rect est centré en Y sur p1[1]
+                    rect = pygame.Rect(left, p1[1] - half_w, length, width)
+                    pygame.draw.rect(screen, color, rect)
+                    
+                else: # Diagonale (Fallback sur draw.line si jamais)
+                    pygame.draw.line(screen, color, p1, p2, width)
+
+            # 2. Dessiner les joints (Carrés)
+            for sp in pts:
+                # On centre manuellement le rect pour être cohérent avec le segment
+                # Rect(left, top, w, h)
+                r_joint = pygame.Rect(sp[0] - half_w, sp[1] - half_w, width, width)
+                pygame.draw.rect(screen, color, r_joint)
+
+    # 1. DESSINER TOUS LES TROTTOIRS (LAYER 0)
+    draw_layer(C_SIDEWALK, w_total)
+
+    # 2. DESSINER TOUTES LES ROUTES (LAYER 1)
+    draw_layer(ROAD_COLOR, w_inner)

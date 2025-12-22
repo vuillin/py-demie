@@ -167,9 +167,11 @@ def generate_fixed_supermarket(width, height):
             details.append({"shape": "rect", "color": C_SM_DESK, "data": pygame.Rect(cx, sy + sm_h - 35, 20, 12)})
             details.append({"shape": "rect", "color": C_SM_CHECKOUT, "data": pygame.Rect(cx + 2, sy + sm_h - 33, 16, 8)})
 
-    # 6. Entrée
-    details.append({"shape": "rect", "color": (150, 200, 255), "data": pygame.Rect(sx + sm_w - 70, sy + sm_h - 4, 25, 4)})
-    details.append({"shape": "rect", "color": (150, 200, 255), "data": pygame.Rect(sx + sm_w - 35, sy + sm_h - 4, 25, 4)})
+    # 6. Entrées (Gauche et Droite)
+    # Porte Gauche
+    details.append({"shape": "rect", "color": (150, 200, 255), "data": pygame.Rect(sx, sy + sm_h // 2 - 15, 4, 30)})
+    # Porte Droite
+    details.append({"shape": "rect", "color": (150, 200, 255), "data": pygame.Rect(sx + sm_w - 4, sy + sm_h // 2 - 15, 4, 30)})
     
     return {"rect": sm_rect, "details": details}
 
