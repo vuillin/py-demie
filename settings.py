@@ -13,6 +13,9 @@ BLUE = (50, 100, 200)   # Homme
 PINK = (220, 100, 180)  # Femme
 RED = (255, 50, 50)     
 ROAD_COLOR = (45, 45, 55)
+C_SIDEWALK = (170, 170, 170)
+ROAD_WIDTH = 20 
+SIDEWALK_WIDTH = 4
 BG_COLOR = (20, 20, 25) 
 
 

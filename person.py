@@ -133,8 +133,13 @@ class Person:
         dist_to_final = math.hypot(self.final_target[0] - self.x, self.final_target[1] - self.y)
         
         if dist_to_final > 100 and not self.path:
-            # On demande la route au GPS !
-            self.path = self.nav.calculate_route((self.x, self.y), self.final_target)
+            # OPTIMISATION : Si le trajet est 100% urbain (départ ET arrivée dans la ville), on n'utilise pas le GPS
+            in_city_start = self.city_rect.collidepoint(self.x, self.y)
+            in_city_end = self.city_rect.collidepoint(*self.final_target)
+
+            if not (in_city_start and in_city_end):
+                # On demande la route au GPS seulement si on sort ou rentre
+                self.path = self.nav.calculate_route((self.x, self.y), self.final_target)
         
         # Si on est proche (< 100px) ou qu'on erre localement, on vide le chemin pour aller tout droit
         elif dist_to_final <= 100:

@@ -132,7 +132,7 @@ while running:
     # ==================================================
     # --- DEBUG : AFFICHER LE RÉSEAU (Graphe) ---
     # ==================================================
-    if False: # Mets False ici pour cacher le graphe sans supprimer le code
+    if True: # Mets False ici pour cacher le graphe sans supprimer le code
         # 1. Dessiner les connexions (Lignes rouges)
         for start_id, end_id in nav.connections:
             # On récupère les positions réelles (x, y) des deux points
