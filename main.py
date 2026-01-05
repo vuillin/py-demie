@@ -6,7 +6,9 @@ from navigation import NavigationGraph
 
 # Initialisation
 pygame.init()
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
+is_fullscreen = True
+screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+WIDTH, HEIGHT = screen.get_size() # On récupère la taille réelle de l'écran
 pygame.display.set_caption("Py-Démie")
 clock = pygame.time.Clock()
 font = pygame.font.SysFont("Arial", 20)
@@ -15,7 +17,7 @@ font_label = pygame.font.SysFont("Arial", 15, bold=True)
 
 # --- SETUP ---
 # 1. Génération de la Carte
-game_map = Map(WIDTH, HEIGHT, POPULATION_SIZE)
+game_map = Map(WORLD_WIDTH, WORLD_HEIGHT, POPULATION_SIZE)
 
 # GPS (graphe)
 nav = NavigationGraph()
@@ -37,8 +39,8 @@ current_hour = 6.0
 game_speed = 1.0 
 
 # Variables Caméra
-zoom = 1.0
-min_zoom = 1.0
+zoom = min(WIDTH / WORLD_WIDTH, HEIGHT / WORLD_HEIGHT) # Auto-fit
+min_zoom = 0.5
 max_zoom = 4.0
 zoom_speed = 0.1
 pan_x, pan_y = 0, 0
@@ -50,6 +52,14 @@ btn_w, btn_h = 40, 30
 margin = 10
 btn_slow = pygame.Rect(WIDTH - (btn_w * 2) - (margin * 2), margin, btn_w, btn_h)
 btn_fast = pygame.Rect(WIDTH - btn_w - margin, margin, btn_w, btn_h)
+btn_screen = pygame.Rect(WIDTH - (btn_w * 3) - (margin * 3), margin, btn_w, btn_h)
+
+def update_ui_layout():
+    """Recalcule la position des éléments d'interface selon la taille d'écran"""
+    global btn_slow, btn_fast, btn_screen
+    btn_slow = pygame.Rect(WIDTH - (btn_w * 2) - (margin * 2), margin, btn_w, btn_h)
+    btn_fast = pygame.Rect(WIDTH - btn_w - margin, margin, btn_w, btn_h)
+    btn_screen = pygame.Rect(WIDTH - (btn_w * 3) - (margin * 3), margin, btn_w, btn_h)
 
 # --- BOUCLE DE JEU ---
 running = True
@@ -58,6 +68,11 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+            
+        # Touche ECHAP pour quitter le plein écran/jeu
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                running = False
             
         # Zoom (Molette)
         elif event.type == pygame.MOUSEWHEEL:
@@ -88,6 +103,17 @@ while running:
                     game_speed = max(0.5, game_speed - 0.5)
                 elif btn_fast.collidepoint(mouse_pos):
                     game_speed = min(10.0, game_speed + 0.5)
+                elif btn_screen.collidepoint(mouse_pos):
+                    is_fullscreen = not is_fullscreen
+                    if is_fullscreen:
+                        screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+                    else:
+                        screen = pygame.display.set_mode((DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT))
+                    
+                    # Mise à jour des dimensions et de l'interface
+                    WIDTH, HEIGHT = screen.get_size()
+                    zoom = min(WIDTH / WORLD_WIDTH, HEIGHT / WORLD_HEIGHT) # Re-fit auto
+                    update_ui_layout()
                 else:
                     is_panning = True
                     last_mouse_pos = mouse_pos
@@ -104,8 +130,8 @@ while running:
                 last_mouse_pos = (mouse_x, mouse_y)
 
     # Clamping Caméra
-    map_w_zoomed = WIDTH * zoom
-    map_h_zoomed = HEIGHT * zoom
+    map_w_zoomed = WORLD_WIDTH * zoom
+    map_h_zoomed = WORLD_HEIGHT * zoom
     pan_x = min(0, max(pan_x, WIDTH - map_w_zoomed))
     pan_y = min(0, max(pan_y, HEIGHT - map_h_zoomed))
 
@@ -181,6 +207,12 @@ while running:
     pygame.draw.rect(screen, (200, 200, 200), btn_fast, 2)
     text_fast = font_btn.render("+", True, WHITE)
     screen.blit(text_fast, (btn_fast.centerx - text_fast.get_width()//2, btn_fast.centery - text_fast.get_height()//2))
+
+    pygame.draw.rect(screen, (70, 70, 80), btn_screen)
+    pygame.draw.rect(screen, (200, 200, 200), btn_screen, 2)
+    # Icone simple pour l'écran (un rectangle ou des crochets)
+    text_screen = font_btn.render("[]", True, WHITE)
+    screen.blit(text_screen, (btn_screen.centerx - text_screen.get_width()//2, btn_screen.centery - text_screen.get_height()//2))
 
     pygame.display.flip()
     clock.tick(FPS)

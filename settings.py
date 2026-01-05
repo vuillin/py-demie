@@ -1,7 +1,11 @@
 
-# Dimensions de l'écran 
-WIDTH = 1200 
-HEIGHT = 800
+# Dimensions du monde (Carte)
+WORLD_WIDTH = 1200 
+WORLD_HEIGHT = 800
+
+# Mode fenêtré par défaut
+DEFAULT_WINDOW_WIDTH = 900
+DEFAULT_WINDOW_HEIGHT = 600
 FPS = 60
 
 # Couleurs RGB
