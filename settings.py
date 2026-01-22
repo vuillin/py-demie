@@ -16,9 +16,11 @@ ORANGE = (230, 120, 0)  # La ville (bordure)
 BLUE = (50, 100, 200)   # Homme
 PINK = (220, 100, 180)  # Femme
 RED = (255, 50, 50)     
+C_WORKER = (255, 215, 0) # Gold (Travailleurs)
 ROAD_COLOR = (45, 45, 55)
 C_SIDEWALK = (170, 170, 170)
 ROAD_WIDTH = 20 
+SIMPLE_ROAD_WIDTH = 7
 SIDEWALK_WIDTH = 4
 BG_COLOR = (20, 20, 25) 
 
