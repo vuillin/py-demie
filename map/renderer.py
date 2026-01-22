@@ -40,6 +40,7 @@ def draw_map(game_map, screen, zoom, pan_x, pan_y, label_font):
 
     # --- 3. ROUTES ---
     _draw_roads(game_map, screen, zoom, pan_x, pan_y, screen_bounds)
+    _draw_simple_roads(game_map, screen, zoom, pan_x, pan_y, screen_bounds)
 
     
     # --- 4. VÉGÉTATION BASSE (FLEURS & BUISSONS) ---
@@ -273,3 +274,44 @@ def _draw_roads(game_map, screen, zoom, pan_x, pan_y, screen_bounds):
 
     # 2. DESSINER TOUTES LES ROUTES (LAYER 1)
     draw_layer(ROAD_COLOR, w_inner)
+
+def _draw_simple_roads(game_map, screen, zoom, pan_x, pan_y, screen_bounds):
+    width = int(SIMPLE_ROAD_WIDTH * zoom)
+    if width < 1: return
+
+    visible_paths = []
+    for path in game_map.simple_roads:
+        screen_points = []
+        for p in path:
+            sx = int(p[0] * zoom + pan_x)
+            sy = int(p[1] * zoom + pan_y)
+            screen_points.append((sx, sy))
+        
+        if len(screen_points) >= 2:
+            visible_paths.append(screen_points)
+
+    half_w = width // 2
+    for pts in visible_paths:
+        for i in range(len(pts) - 1):
+            p1 = pts[i]
+            p2 = pts[i+1]
+            
+            if p1[0] == p2[0]: # Vertical
+                top = min(p1[1], p2[1])
+                height = abs(p1[1] - p2[1])
+                rect = pygame.Rect(p1[0] - half_w, top, width, height)
+                pygame.draw.rect(screen, ROAD_COLOR, rect)
+                
+            elif p1[1] == p2[1]: # Horizontal
+                left = min(p1[0], p2[0])
+                length = abs(p1[0] - p2[0])
+                rect = pygame.Rect(left, p1[1] - half_w, length, width)
+                pygame.draw.rect(screen, ROAD_COLOR, rect)
+                
+            else: # Diagonale fallback
+                pygame.draw.line(screen, ROAD_COLOR, p1, p2, width)
+        
+        # Joints (Carrés)
+        for sp in pts:
+            r_joint = pygame.Rect(sp[0] - half_w, sp[1] - half_w, width, width)
+            pygame.draw.rect(screen, ROAD_COLOR, r_joint)

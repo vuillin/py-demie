@@ -43,7 +43,10 @@ class Map:
         self.medical_center = generators.generate_medical_center()
         self.sports_complex = generators.generate_sports_complex(width)
 
+        self.sports_complex = generators.generate_sports_complex(width)
+
         self.roads = []
+        self.simple_roads = []
         self._build_roads()
 
         self._define_house_slots()
@@ -51,6 +54,7 @@ class Map:
 
     def _build_roads(self):
         self.roads = data.get_road_network()
+        self.simple_roads = data.get_simple_road_network()
 
     def _define_house_slots(self):
         """
