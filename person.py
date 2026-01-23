@@ -4,38 +4,35 @@ import math
 from settings import *
 
 class Person:
-    # On ajoute 'supermarket_rect', 'sports_complex_rect' et 'nav' dans les arguments
-    def __init__(self, x, y, city_rect, supermarket_rect, sports_complex_rect, nav):
+    def __init__(self, x, y, city_rect, supermarket_rect, sports_complex_rect, medical_center_rect, nav):
         self.x = x
         self.y = y
         self.home = (x, y)
         self.city_rect = city_rect
         self.supermarket_rect = supermarket_rect if supermarket_rect else city_rect 
-        self.sports_complex_rect = sports_complex_rect if sports_complex_rect else city_rect # Fallback
+        self.sports_complex_rect = sports_complex_rect if sports_complex_rect else city_rect
+        self.medical_center_rect = medical_center_rect if medical_center_rect else city_rect
         
-        self.shopping_day = random.randint(0, 6) # 0-6 (Lundi-Dimanche)
+        self.shopping_day = random.randint(0, 6)
         
-        # 20% de sportifs
+        # 20% sont sportifs
         self.is_sportive = random.random() < 0.2
         self.sport_day = -1
         if self.is_sportive:
-            # On choisit un jour de sport différent du jour de course
+            # jour de sport != jour de courses
             while True:
                 self.sport_day = random.randint(0, 6)
                 if self.sport_day != self.shopping_day:
                     break
 
-        self.nav = nav # <--- On stocke le GPS
+        self.nav = nav 
         self.radius = 5
         
-        # --- PATHFINDING ---
-        self.path = []      # La liste des points à suivre
-        self.final_target = (x, y) # La destination finale réelle
-        # -------------------
+        # Pathfinding
+        self.path = []
+        self.final_target = (x, y)
 
-        # Identité 
-        self.gender = random.choice(["M", "F"])
-        self.color = BLUE if self.gender == "M" else PINK
+        self.color = BLUE 
         self.age = random.randint(18, 90)
         self.is_fragile = (random.random() < FRAGILITY_RATE) or (self.age > 70)
         self.is_employed = random.random() < 0.6
@@ -43,28 +40,82 @@ class Person:
         self.stay_tonight = False
         self.goes_to_city_today = False
         self.wanders_locally_today = False
+        self.goes_to_vaccine_today = False
 
         # Mouvement
-        self.target = (x, y) # Cible immédiate (prochain point du chemin)
+        self.target = (x, y) 
         self.base_speed = BASE_WALK_SPEED + random.uniform(-0.2, 0.2)
         self.speed = self.base_speed 
         self.base_speed = BASE_WALK_SPEED + random.uniform(-0.2, 0.2)
         self.speed = self.base_speed 
         self.wandering_target = None 
-        self.job = None # Metier special 
-        self.wait_timer = 0 # Pause généralisée
+        self.job = None 
+        self.wait_timer = 0
+
+        # --- EPIDEMIC STATE ---
+        # États : S, E, I, R, D
+        self.state = "S" 
+        self.days_infected = 0
+        self.incubation_timer = 0
+        self.infections_caused = 0
+
+    def update_health(self):
+        # Mise à jour quotidienne (minuit)
+        if self.state == "E":
+            self.incubation_timer += 1
+            if self.incubation_timer >= EPI_INCUBATION:
+                self.state = "I"
+                self.days_infected = 0
+        
+        elif self.state == "I":
+            self.days_infected += 1
+            if self.days_infected >= EPI_DURATION:
+                # Fin de maladie : Mort ou Guérison ?
+                mortality = EPI_MORTALITY
+                if self.is_fragile: mortality *= 3 # Plus risqué pour les fragiles
+                
+                if random.random() < mortality:
+                    self.state = "D"
+                    self.speed = 0 # Ne bouge plus
+                else:
+                    self.state = "R"
 
     def update_behavior(self, hour, day_index):
-        # SI ON A UN MÉTIER : ON DÉLÈGUE TOUT
+        if self.state == "D": return # Les morts ne bougent pas
+        
+        # Si job défini, il gère
         if self.job:
             self.job.apply_behavior(self, hour)
             return
 
-        # Cette fonction décide OÙ on veut aller (self.final_target)
-        # J'ai remplacé tous les 'self.target =' par 'self.final_target ='
+        # VACCINATION (Prioritaire)
+        if self.goes_to_vaccine_today and 8 <= hour < 19:
+            self.speed = self.base_speed
+            
+            # Si on est DANS le centre médical
+            if self.medical_center_rect.collidepoint(self.x, self.y):
+                # VACCINATION
+                if self.state == "S":
+                    self.state = "V"
+                
+                # On attend dedans
+                if self.wait_timer == 0:
+                    dist = math.hypot(self.final_target[0] - self.x, self.final_target[1] - self.y)
+                    if dist < 10: 
+                        self.wait_timer = random.randint(120, 240)
+                        rx = random.randint(self.medical_center_rect.left + 5, self.medical_center_rect.right - 5)
+                        ry = random.randint(self.medical_center_rect.top + 5, self.medical_center_rect.bottom - 5)
+                        self.final_target = (rx, ry)
+            else:
+                # On va vers le centre médical
+                if not self.medical_center_rect.collidepoint(*self.final_target):
+                    rx = random.randint(self.medical_center_rect.left + 5, self.medical_center_rect.right - 5)
+                    ry = random.randint(self.medical_center_rect.top + 5, self.medical_center_rect.bottom - 5)
+                    self.final_target = (rx, ry)
+            return
 
-        # 0. SHOPPING DAY (Overrides almost everything except night)
-        # Si c'est notre jour de course, on va au supermarché pendant la journée (8h-17h/19h)
+
+        # COURSES
         if day_index == self.shopping_day and 8 <= hour < 19:
             self.speed = self.base_speed
             
@@ -88,14 +139,13 @@ class Person:
 
             return 
 
-        # 0.5. SPORT DAY (Overrides routine too)
-        # Si c'est notre jour de sport, on va au complexe sportif (8h-19h)
+        # SPORT
         if self.is_sportive and day_index == self.sport_day and 8 <= hour < 19:
             self.speed = self.base_speed
             
-            # Si on est DANS le complexe sportif
+            # Au complexe sportif
             if self.sports_complex_rect.collidepoint(self.x, self.y):
-                # On erre dedans
+                # Activité sur place
                 if self.wait_timer == 0:
                     dist = math.hypot(self.final_target[0] - self.x, self.final_target[1] - self.y)
                     if dist < 10: 
@@ -104,14 +154,14 @@ class Person:
                         ry = random.randint(self.sports_complex_rect.top + 5, self.sports_complex_rect.bottom - 5)
                         self.final_target = (rx, ry)
             else:
-                # On va vers le complexe
+                # En route vers le sport
                 if not self.sports_complex_rect.collidepoint(*self.final_target):
                     rx = random.randint(self.sports_complex_rect.left + 5, self.sports_complex_rect.right - 5)
                     ry = random.randint(self.sports_complex_rect.top + 5, self.sports_complex_rect.bottom - 5)
                     self.final_target = (rx, ry)
             return
 
-        # PHASE 1 : JOURNÉE (8h - 17h)
+        # JOURNÉE (8h - 17h)
         if 8 <= hour < 17:
             self.speed = self.base_speed
             
@@ -180,7 +230,7 @@ class Person:
                 else:
                     self.final_target = self.home
 
-        # PHASE 2 : SOIRÉE
+        # SOIRÉE
         elif 17 <= hour < 23:
             if self.is_employed and self.stay_tonight:
                 self.speed = self.base_speed * 0.6
@@ -207,7 +257,7 @@ class Person:
                 self.speed = self.base_speed
                 self.final_target = self.home
 
-        # PHASE 3 : NUIT
+        # NUIT
         else:
             self.final_target = self.home
             self.wandering_target = None
@@ -218,21 +268,19 @@ class Person:
 
     
     def update(self, hour, game_speed_multiplier, day_index):
-        # 0. GESTION PAUSE GÉNÉRALE
+        # Pause en cours
         if self.wait_timer > 0:
             self.wait_timer -= 1
-            # On annule le mouvement
             return
             
-        # 1. On décide où on veut aller au final
+        # Calcul de destination
         self.update_behavior(hour, day_index)
 
-        # 2. LOGIQUE GPS AUTOMATIQUE
-        # Si on est loin de l'objectif (> 100px) et qu'on n'a pas de chemin, on en calcule un
+        # GPS Automatique si loin de l'objectif
         dist_to_final = math.hypot(self.final_target[0] - self.x, self.final_target[1] - self.y)
         
         if dist_to_final > 100 and not self.path:
-            # OPTIMISATION : Si le trajet est 100% urbain (départ ET arrivée dans la ville), on n'utilise pas le GPS
+            # Si départ et arrivée sont en ville/batiments, pas besoin de GPS (optimisation)
             in_city_start = self.city_rect.collidepoint(self.x, self.y)
             in_city_end = self.city_rect.collidepoint(*self.final_target)
             
@@ -241,10 +289,14 @@ class Person:
             
             in_sport_start = self.sports_complex_rect.collidepoint(self.x, self.y)
             in_sport_end = self.sports_complex_rect.collidepoint(*self.final_target)
+            
+            in_med_start = self.medical_center_rect.collidepoint(self.x, self.y)
+            in_med_end = self.medical_center_rect.collidepoint(*self.final_target)
 
-            if not (in_city_start and in_city_end) and not (in_shop_start and in_shop_end) and not (in_sport_start and in_sport_end):
-                # On demande la route au GPS seulement si on sort ou rentre
-                # ET si on n'est pas en train de bosser (mode local)
+            if not (in_city_start and in_city_end) and not (in_shop_start and in_shop_end) and \
+               not (in_sport_start and in_sport_end) and not (in_med_start and in_med_end):
+                
+                # GPS sauf si mode travail local
                 should_use_gps = True
                 if self.job and self.job.is_in_work_mode(self, hour):
                     should_use_gps = False
@@ -252,17 +304,14 @@ class Person:
                 if should_use_gps:
                     self.path = self.nav.calculate_route((self.x, self.y), self.final_target)
         
-        # Si on est proche (< 100px) ou qu'on erre localement, on vide le chemin pour aller tout droit
+        # Si proche, on vide le chemin et on line drive
         elif dist_to_final <= 100:
             self.path = [] 
 
-        # 3. DÉPLACEMENT
-        # Quelle est ma cible IMMEDIATE ?
+        # Cible immédiate
         if self.path:
-            # Si j'ai un chemin, je vise le premier point
             self.target = self.path[0]
         else:
-            # Sinon, je vise la destination finale (tout droit)
             self.target = self.final_target
 
         road_boost = 1.0
@@ -280,11 +329,11 @@ class Person:
 
         if dist > 0:
             if dist < real_speed:
-                # On est arrivé au point intermédiaire !
+                # Arrivé au point
                 self.x = self.target[0]
                 self.y = self.target[1]
                 if self.path:
-                    self.path.pop(0) # On retire le point atteint, on passe au suivant
+                    self.path.pop(0) 
             else:
                 move_dist = min(dist, real_speed)
                 self.x += (dx / dist) * move_dist
@@ -295,9 +344,23 @@ class Person:
         cy = int(self.y * zoom + pan_y)
         screen_radius = int(max(2, self.radius * zoom))
 
-        pygame.draw.circle(screen, self.color, (cx, cy), screen_radius)
+        # Couleur selon état
+        draw_color = self.color 
         
-        if self.is_fragile:
+        if self.state == "E":
+            draw_color = C_EXPOSED 
+        elif self.state == "I":
+            draw_color = C_INFECTED
+        elif self.state == "R":
+            draw_color = C_RECOVERED
+        elif self.state == "V":
+            draw_color = C_VACCINATED
+        elif self.state == "D":
+            draw_color = C_DEAD
+            
+        pygame.draw.circle(screen, draw_color, (cx, cy), screen_radius)
+        
+        if self.is_fragile and self.state != "D":
             inner_radius = screen_radius // 2
             if inner_radius < 1: inner_radius = 1
             pygame.draw.circle(screen, WHITE, (cx, cy), inner_radius)

@@ -3,7 +3,7 @@ import heapq
 
 class NavigationGraph:
     def __init__(self):
-        # 1. DÉFINITION DES NOEUDS
+        # Noeuds
         self.nodes = {
             "A": (596, 311),
             "B": (747, 431),
@@ -69,7 +69,7 @@ class NavigationGraph:
 
         }
 
-        # 2. DÉFINITION DES CONNEXIONS 
+        # Connexions
         self.connections = [
             ("H", "I"), ("I", "J"), ("J", "K"), ("K", "L"),
             ("M", "N"),("O", "P"),
@@ -95,7 +95,7 @@ class NavigationGraph:
             ("D", "K")  # Ouest
         ]
 
-        # 3. CONSTRUCTION DU GRAPHE
+        # Build
         self.graph = {node: {} for node in self.nodes}
         self._build_graph()
 
@@ -104,7 +104,6 @@ class NavigationGraph:
         return math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
 
     def _build_graph(self):
-        """Remplit le graphe avec les voisins et le coût (distance) de chaque route"""
         for n1, n2 in self.connections:
             d = self._dist(self.nodes[n1], self.nodes[n2])
             # C'est une route à double sens, on ajoute dans les deux directions
@@ -112,7 +111,7 @@ class NavigationGraph:
             self.graph[n2][n1] = d
 
     def get_closest_node(self, pos):
-        """Trouve le point noir le plus proche d'une position donnée (x, y)"""
+        """Trouve le noeud le plus proche"""
         closest_node = None
         min_dist = float('inf')
         
@@ -125,11 +124,7 @@ class NavigationGraph:
         return closest_node
 
     def get_shortest_path(self, start_node, end_node):
-        """
-        ALGORITHME DE DIJKSTRA
-        Trouve la suite de points la plus courte entre deux noeuds du réseau.
-        """
-        # File d'attente prioritaire : (coût_total, noeud_actuel)
+        # Dijkstra
         queue = [(0, start_node)]
         distances = {node: float('inf') for node in self.nodes}
         distances[start_node] = 0
@@ -170,10 +165,7 @@ class NavigationGraph:
         return path
 
     def calculate_route(self, start_pos, end_pos):
-        """
-        FONCTION PRINCIPALE
-        Calcule tout le trajet : Position -> Entrée Réseau -> Chemin -> Sortie Réseau -> Destination
-        """
+        # Calcul itinéraire complet
         # 1. Trouver l'entrée et la sortie du réseau
         node_entry = self.get_closest_node(start_pos)
         node_exit = self.get_closest_node(end_pos)
@@ -181,7 +173,7 @@ class NavigationGraph:
         # 2. Calculer le chemin sur le réseau
         network_path = self.get_shortest_path(node_entry, node_exit)
 
-        # 3. Assembler le tout
+        # Assemblage
         full_route = []
 
         full_route.extend(network_path)

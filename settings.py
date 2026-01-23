@@ -115,3 +115,17 @@ FRAGILITY_RATE = 0.05
 BASE_CLOCK_SPEED = 0.005  
 BASE_WALK_SPEED = 1
 HOUSE_MARGIN = 5
+
+# --- EPIDEMIC SETTINGS ---
+EPI_RADIUS = 20          # Distance de transmission
+EPI_PROBABILITY = 0.005  # Probabilité par frame de contact (0.5%)
+EPI_INCUBATION = 3       # Jours avant de devenir contagieux/malade
+EPI_DURATION = 10        # Jours de maladie
+EPI_MORTALITY = 0.03     # 3% de chance de mourir
+
+# Couleurs États
+C_EXPOSED     = (255, 150, 150) # Rouge très clair (Incubation)
+C_INFECTED    = (230, 40, 40)  # Rouge (Malade)
+C_RECOVERED   = (255, 215, 0)  # Jaune (Guéri)
+C_VACCINATED  = (0, 255, 255)  # Cyan (Vacciné)
+C_DEAD        = (30, 30, 30)   # Noir/Gris
