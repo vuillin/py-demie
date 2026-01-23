@@ -118,7 +118,7 @@ HOUSE_MARGIN = 5
 
 # --- EPIDEMIC SETTINGS ---
 EPI_RADIUS = 20          # Distance de transmission
-EPI_PROBABILITY = 0.005  # Probabilité par frame de contact (0.5%)
+EPI_PROBABILITY = 0.0025  # Probabilité par frame de contact (0.5%)
 EPI_INCUBATION = 3       # Jours avant de devenir contagieux/malade
 EPI_DURATION = 10        # Jours de maladie
 EPI_MORTALITY = 0.03     # 3% de chance de mourir

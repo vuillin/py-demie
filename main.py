@@ -20,8 +20,12 @@ font_title = pygame.font.SysFont("Segoe UI", 30, bold=True)
 font_btn = pygame.font.SysFont("Segoe UI", 20, bold=True)
 font_btn_small = pygame.font.SysFont("Segoe UI", 13, bold=True)
 font_label = pygame.font.SysFont("Arial", 15, bold=True)
-font_value = pygame.font.SysFont("Consolas", 28, bold=True)
+font_value = pygame.font.SysFont("Segoe UI", 18, bold=True)
 font_emoji = pygame.font.SysFont("Segoe UI Emoji", 20)
+font_big_title = pygame.font.SysFont("Segoe UI", 48, bold=True)
+font_subtitle = pygame.font.SysFont("Segoe UI", 16, bold=True)
+font_clock = pygame.font.SysFont("Segoe UI", 60, bold=True)
+font_date = pygame.font.SysFont("Segoe UI", 24, bold=True)
 
 # --- THEME HUD ---
 SidebarColor     = (30, 32, 36)
@@ -83,6 +87,7 @@ patient_zero.state = "I"
 current_hour = 6.0 
 game_speed = 1.0 
 current_day_index = 0 # 0 = Lundi
+day_count = 1 # Global day counter
 DAYS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
 
 # Variables Caméra
@@ -146,54 +151,81 @@ def update_ui_layout():
     if is_sidebar_visible:
         # Centre de la sidebar
         cx = sidebar_rect.centerx
-        top = 100
+        sidebar_w = sidebar_rect.width
+        top = 140
         
         # CONFIG BOUTONS
-        btn_size = 60
-        gap = 15
+        # Dynamic sizing relative to sidebar width (base reference ~300px)
+        # Scale factor based on width? Or just ratios.
         
-        # Colonne 1 (Gauche) et 2 (Droite) pour Speed
-        c1 = cx - gap//2 - btn_size
-        c2 = cx + gap//2
+        # Row 1: Clock Panel (Larger)
+        # Height proportional to width to keep aspect ratio
+        clock_panel_h = int(sidebar_w * 0.45) # ~135px for 300w
         
-        # Row 1: Speed
-        r1 = top + 150
+        # Row 2: Speed Controls (Directly below Clock Panel)
+        r_controls = top + clock_panel_h + 20
         
-        btn_slow = pygame.Rect(c1, r1, btn_size, btn_size)
-        btn_fast = pygame.Rect(c2, r1, btn_size, btn_size)
+        # Button Sizing
+        # We want internal margin of 20px total (10 left 10 right) inside the sidebar? 
+        # Actually sidebar has 20px padding for panel.
+        panel_inner_w = sidebar_w - 40 
         
-        # Row 2: Stats (Large)
-        r2 = r1 + btn_size + gap
-        total_w = (btn_size * 2) + gap
-        btn_stats = pygame.Rect(cx - total_w//2, r2, total_w, btn_size)
+        # 3 elements: Button(20%) Gap(5%) Display(50%) Gap(5%) Button(20%) ?
+        # Let's try: Btn(22%) Gap(10px) Display(Fill) Gap(10px) Btn(22%)
         
-        # Row Bottom: Graph
-        btn_graph = pygame.Rect(cx - btn_size//2, HEIGHT - 80, btn_size, btn_size)
+        gap_controls = 10
+        btn_w = int(panel_inner_w * 0.22)
+        btn_h = btn_w # Square buttons as per reference
         
-        # VACCINATION UI (Above Graph)
-        # Layout:
-        # [ VACCINATION ON/OFF ] (Large but not too tall)
-        # [ - ] [ 500 ] [ + ]
+        # Layout: [ < ] [ x1.0 ] [ > ]
+        disp_w = panel_inner_w - (btn_w * 2) - (gap_controls * 2)
         
-        vac_bottom_y = btn_graph.top - 50 # Increased spacing from 20 to 50
+        total_ctrl_w = panel_inner_w # It fills the inner panel width
+        start_x = cx - total_ctrl_w // 2
+        
+        btn_slow = pygame.Rect(start_x, r_controls, btn_w, btn_h)
+        # Display rect (just for logic if needed, or purely visual)
+        rect_speed = pygame.Rect(start_x + btn_w + gap_controls, r_controls, disp_w, btn_h)
+        btn_fast = pygame.Rect(rect_speed.right + gap_controls, r_controls, btn_w, btn_h)
+        
+        # Next elements (Stats)
+        r2 = r_controls + btn_h + 30
+        
+        # Stats Button (Full Width of inner panel)
+        btn_stats = pygame.Rect(cx - panel_inner_w//2, r2, panel_inner_w, btn_h)
+        
+        # Stats Height estimation (Legend + Simple Panels)
+        # Gap 25 + Legend(4*22=88) + Gap 35 + Stats(2*28=56) = ~204
+        # Stats Height estimation
+        # Reduced to avoid "giga space"
+        stats_section_h = 180 
+        
+        # VACCINATION UI (Below Stats)
+        vac_start_y = btn_stats.bottom + stats_section_h + 15
+        
+        # Button Main (Campaign)
+        vac_btn_h = 40
+        btn_vaccination = pygame.Rect(cx - panel_inner_w//2, vac_start_y, panel_inner_w, vac_btn_h)
         
         # Controls Row
         ctrl_h = 30
         btn_pm_w = 30
+        ctrl_y = btn_vaccination.bottom + 10
         
-        ctrl_y = vac_bottom_y - ctrl_h
-        
-        # Center dims
+        # Center dims for controls
         total_ctrl_w = 140
         start_ctrl_x = cx - total_ctrl_w // 2
         
         btn_doses_minus = pygame.Rect(start_ctrl_x, ctrl_y, btn_pm_w, ctrl_h)
         btn_doses_plus  = pygame.Rect(start_ctrl_x + total_ctrl_w - btn_pm_w, ctrl_y, btn_pm_w, ctrl_h)
         
-        # Button Main (Campaign)
-        vac_btn_h = 40
-        vac_btn_y = ctrl_y - 10 - vac_btn_h
-        btn_vaccination = pygame.Rect(cx - total_w//2, vac_btn_y, total_w, vac_btn_h)
+        
+        # Row Bottom: Graph (Below Vaccination)
+        # Use simple wide button style
+        graph_w = panel_inner_w
+        graph_h = 40
+        graph_y = ctrl_y + ctrl_h + 30
+        btn_graph = pygame.Rect(cx - graph_w//2, graph_y, graph_w, graph_h)
         
         
         # Bouton Fermer Stats (Il sera dans la sidebar stats)
@@ -333,6 +365,7 @@ while running:
     if current_hour >= 24:
         current_hour = 0
         current_day_index = (current_day_index + 1) % 7
+        day_count += 1
         
         # Progression maladie
         for p in population:
@@ -450,6 +483,7 @@ while running:
     # --- RENDERING ATH ---
     
     if is_sidebar_visible:
+        mouse_pos = pygame.mouse.get_pos()
         # 1. FOND
         pygame.draw.rect(screen, SidebarColor, sidebar_rect)
         pygame.draw.line(screen, (50, 50, 60), (sidebar_rect.left, 0), (sidebar_rect.left, HEIGHT), 2)
@@ -457,33 +491,189 @@ while running:
         cx = sidebar_rect.centerx
         
         # 2. TITRE
-        title_surf = font_title.render("PY-DEMIE", True, AccentColor)
+        # Main Title "PY-DÉMIE"
+        title_surf = font_big_title.render("PY-DÉMIE", True, WHITE)
+        # Resize if too big
+        max_w = sidebar_rect.width - 30
+        if title_surf.get_width() > max_w:
+             ratio = max_w / title_surf.get_width()
+             new_h = int(title_surf.get_height() * ratio)
+             title_surf = pygame.transform.smoothscale(title_surf, (max_w, new_h))
+        
         screen.blit(title_surf, (cx - title_surf.get_width()//2, 30))
         
-        # 3. PANNEAU DATE HEURE
-        panel_rect = pygame.Rect(sidebar_rect.left + 20, 80, sidebar_rect.width - 40, 120)
-        pygame.draw.rect(screen, PanelColor, panel_rect, border_radius=10)
-        pygame.draw.rect(screen, (60, 60, 70), panel_rect, 2, border_radius=10)
-        
-        # Jour
-        day_str = DAYS[current_day_index].upper()
-        draw_day = font.render(day_str, True, TextColor)
-        screen.blit(draw_day, (panel_rect.centerx - draw_day.get_width()//2, panel_rect.y + 15))
-        
-        # Heure
-        hour_val = int(current_hour)
-        hour_str = f"{hour_val:02d}:00"
-        draw_hour = font_value.render(hour_str, True, WHITE)
-        screen.blit(draw_hour, (panel_rect.centerx - draw_hour.get_width()//2, panel_rect.y + 45))
-        
-        # Vitesse LABEL
-        spd_lbl = font_label.render(f"SPEED x{game_speed:.1f}", True, (150, 150, 150))
-        screen.blit(spd_lbl, (panel_rect.centerx - spd_lbl.get_width()//2, panel_rect.y + 90))
+        # Separator Line
+        line_y = 30 + title_surf.get_height() + 5
+        line_width = min(240, sidebar_rect.width - 50)
+        pygame.draw.line(screen, (60, 60, 70), (cx - line_width//2, line_y), (cx + line_width//2, line_y), 2)
 
-        # 4. BOUTONS STYLÉS
-        mouse_pos = pygame.mouse.get_pos()
+        # Subtitle "SIMULATEUR D'ÉPIDÉMIE"
+        sub_surf = font_subtitle.render("SIMULATEUR D'ÉPIDÉMIE", True, WHITE)
+        if sub_surf.get_width() > max_w:
+             ratio = max_w / sub_surf.get_width()
+             new_h = int(sub_surf.get_height() * ratio)
+             sub_surf = pygame.transform.smoothscale(sub_surf, (max_w, new_h))
+
+        screen.blit(sub_surf, (cx - sub_surf.get_width()//2, line_y + 10))
         
-        # --- Helper Style ---
+        # 3. PANNEAU DATE HEURE (NOUVEAU DESIGN 3D)
+        # Dynamic height
+        sidebar_w = sidebar_rect.width
+        clock_panel_h = int(sidebar_w * 0.45)
+        
+        # Base/Shadow (Effet 3D)
+        shadow_depth = 10
+        # On dessine le fond (PanelColor) décalé vers le bas
+        base_rect = pygame.Rect(sidebar_rect.left + 20, 140 + shadow_depth, sidebar_rect.width - 40, clock_panel_h)
+        pygame.draw.rect(screen, (40, 40, 40), base_rect, border_radius=12) # Couleur #282828
+        
+        # Fond Noir (Face avant)
+        panel_rect = pygame.Rect(sidebar_rect.left + 20, 140, sidebar_rect.width - 40, clock_panel_h)
+        pygame.draw.rect(screen, BLACK, panel_rect, border_radius=12)
+        # Légère bordure grise sombre
+        pygame.draw.rect(screen, (49, 49, 49), panel_rect, 3, border_radius=12) # Couleur #313131
+        
+        # Heure (Grande, Blanche)
+        hour_val = int(current_hour)
+        minute_val = 0 # On reste sur des heures pleines pour l'instant
+        time_str = f"{hour_val:02d} : {minute_val:02d}"
+        
+        draw_time = font_clock.render(time_str, True, WHITE)
+        # Scale Time (Max 75% of panel width)
+        max_time_w = panel_rect.width * 0.75
+        if draw_time.get_width() > max_time_w:
+            ratio = max_time_w / draw_time.get_width()
+            new_h = int(draw_time.get_height() * ratio)
+            draw_time = pygame.transform.smoothscale(draw_time, (int(max_time_w), new_h))
+            
+        # Center vertically in upper part
+        # Center point roughly at 35% height
+        time_y = panel_rect.y + int(clock_panel_h * 0.35) - draw_time.get_height()//2
+        screen.blit(draw_time, (panel_rect.centerx - draw_time.get_width()//2, time_y))
+        
+        # Date (Gris, LUNDI - JOUR X)
+        day_str = f"{DAYS[current_day_index].upper()} - JOUR {day_count}"
+        draw_date = font_date.render(day_str, True, (150, 150, 160))
+        
+        # Scale Date (Max 90% of panel width)
+        if draw_date.get_width() > max_time_w:
+            ratio = max_time_w / draw_date.get_width()
+            new_h = int(draw_date.get_height() * ratio)
+            draw_date = pygame.transform.smoothscale(draw_date, (int(max_time_w), new_h))
+
+        # Position below time (roughly 75% height)
+        date_y = panel_rect.y + int(clock_panel_h * 0.75) - draw_date.get_height()//2
+        screen.blit(draw_date, (panel_rect.centerx - draw_date.get_width()//2, date_y))
+
+
+        # 4. SPEED CONTROLS (3D BUTTONS)
+        # Helper pour bouton 3D (Shifted Base approach)
+        def draw_3d_btn(rect, color_top, color_shadow, icon_str, pressed=False):
+            # shadow_h = fixed depth (e.g. 6)
+            depth = 6
+            
+            # Pressed state: Move TOP rect down by half depth
+            # Unpressed state: Top rect is at original pos
+            if pressed: 
+                y_offset = depth // 2
+            else:
+                y_offset = 0
+            
+            # Base Rect (Shadow) - Always at rect.y + depth
+            # Note: rect is assumed to be the "layout slot" for the top face.
+            # To avoid layout overlap, we draw base slightly below.
+            base_rect = pygame.Rect(rect.x, rect.y + depth, rect.width, rect.height)
+            pygame.draw.rect(screen, color_shadow, base_rect, border_radius=10)
+            
+            # Top Rect (Face)
+            top_rect = pygame.Rect(rect.x, rect.y + y_offset, rect.width, rect.height)
+            pygame.draw.rect(screen, color_top, top_rect, border_radius=10)
+            
+            # Icon (< ou >)
+            ic = font_clock.render(icon_str, True, WHITE)
+            # Scale Icon to fit button (30% width?)
+            max_ic_w = rect.width * 0.4
+            if ic.get_width() > max_ic_w:
+                 ratio = max_ic_w / ic.get_width()
+                 new_h = int(ic.get_height() * ratio)
+                 ic = pygame.transform.smoothscale(ic, (int(max_ic_w), new_h))
+                 
+            screen.blit(ic, (top_rect.centerx - ic.get_width()//2, top_rect.centery - ic.get_height()//2 - 2))
+
+        # SLOW (<) - RED
+        c_red_top = (180, 50, 50)
+        c_red_bot = (130, 30, 30)
+        c_green_top = (50, 180, 60)
+        c_green_bot = (30, 130, 40)
+        
+        # Check interaction
+        slow_pressed = btn_slow.collidepoint(mouse_pos) and pygame.mouse.get_pressed()[0]
+        fast_pressed = btn_fast.collidepoint(mouse_pos) and pygame.mouse.get_pressed()[0]
+
+        draw_3d_btn(btn_slow, c_red_top, c_red_bot, "<", pressed=slow_pressed)
+        
+        # Display Box (Center)
+        # Recalcul position based on buttons
+        space_between = btn_fast.left - btn_slow.right
+        # Reducing width slightly as requested (bigger gap)
+        display_w = space_between - 30 
+        rect_speed = pygame.Rect(btn_slow.right + 15, btn_slow.top, display_w, btn_slow.height)
+        
+        # 3D Effect for Display (Shifted Base approach)
+        c_speed_top = (40, 40, 40)    # Dark Grey
+        c_speed_shadow = (25, 25, 25) # Darker Black/Grey
+        
+        # Base/Shadow
+        depth = 6
+        base_rect_speed = pygame.Rect(rect_speed.x, rect_speed.y + depth, rect_speed.width, rect_speed.height)
+        pygame.draw.rect(screen, c_speed_shadow, base_rect_speed, border_radius=10)
+        
+        # Main Face
+        pygame.draw.rect(screen, c_speed_top, rect_speed, border_radius=10)
+        
+        # Speed Text
+        spd_str = f"x{game_speed:.1f}"
+        spd_txt = font_title.render(spd_str, True, WHITE)
+        # Scale to max 60% width of display box
+        max_spd_w = rect_speed.width * 0.6
+        if spd_txt.get_width() > max_spd_w:
+            ratio = max_spd_w / spd_txt.get_width()
+            new_h = int(spd_txt.get_height() * ratio)
+            spd_txt = pygame.transform.smoothscale(spd_txt, (int(max_spd_w), new_h))
+            
+        screen.blit(spd_txt, (rect_speed.centerx - spd_txt.get_width()//2, rect_speed.centery - spd_txt.get_height()//2))
+
+        # FAST (>) - GREEN
+        draw_3d_btn(btn_fast, c_green_top, c_green_bot, ">", pressed=fast_pressed)
+
+        # 4. (SUITE) BOUTONS STYLÉS (STATS, etc)
+        
+        # STATS BUTTON (Purple 3D with Text)
+        c_stats_top = (138, 43, 226) # BlueViolet / Purple
+        c_stats_bot = (75, 0, 130)   # Indigo / Darker Purple
+        
+        # Check interaction
+        stats_pressed = btn_stats.collidepoint(mouse_pos) and pygame.mouse.get_pressed()[0]
+        
+        # 3D Logic (Shifted Base)
+        depth = 6
+        if stats_pressed: y_offset = depth // 2
+        else: y_offset = 0
+            
+        # Base
+        base_rect_stats = pygame.Rect(btn_stats.x, btn_stats.y + depth, btn_stats.width, btn_stats.height)
+        pygame.draw.rect(screen, c_stats_bot, base_rect_stats, border_radius=10)
+        
+        # Top
+        top_rect_stats = pygame.Rect(btn_stats.x, btn_stats.y + y_offset, btn_stats.width, btn_stats.height)
+        pygame.draw.rect(screen, c_stats_top, top_rect_stats, border_radius=10)
+        
+        # Text "STATISTIQUES"
+        txt_stats = font_subtitle.render("STATISTIQUES", True, WHITE) # Using subtitle font (bold 16)
+        screen.blit(txt_stats, (top_rect_stats.centerx - txt_stats.get_width()//2, top_rect_stats.centery - txt_stats.get_height()//2))
+
+
+        # --- Helper Style (Restored for Graph/Vaccination if needed, though Graph is next) ---
         def draw_ctrl_btn(rect, color, icon_type, text=None, active=False):
             # Fond
             base_col = list(color)
@@ -528,13 +718,8 @@ while running:
                 pygame.draw.line(screen, WHITE, (icx-6, icy+4), (icx+6, icy-4), 2)
                 pygame.draw.line(screen, WHITE, (icx+6, icy-4), (icx+5, icy+6), 2)
 
-        # SLOW (Blue)
-        draw_ctrl_btn(btn_slow, (60, 100, 180), "minus")
-        # FAST (Blue - Meme couleur demandé)
-        draw_ctrl_btn(btn_fast, (60, 100, 180), "plus")
         
-        # STATS (Purple) - Avec Texte
-        draw_ctrl_btn(btn_stats, (140, 80, 200), "stats", text="STATISTIQUES", active=target_stats_open)
+        # STATS (Purple) - Old call removed (Replaced by 3D version above)
         
         # --- MINI STATS EPIDEMIE (Sidebar) ---
         # On affiche 3 cartes "Widget" en colonne
@@ -553,28 +738,91 @@ while running:
         epi_y_end = btn_vaccination.top - 15
         epi_h_total = max(50, epi_y_end - epi_y_start)
         
-        # On va faire 6 cartes de hauteur égale
-        widget_h = min(40, (epi_h_total - 20) // 6) 
-        widget_w = 120
-        wx = cx - widget_w // 2
+        # 1. PIE CHART (REMOVED per user request)
         
-        params = [
-            # GROUPE 1 : "SAFE"
-            {"val": nb_susceptible, "col": (100, 150, 240), "emoji": "💙"}, # Blue
-            {"val": nb_vaccinated, "col": C_VACCINATED, "emoji": "💉"},   # Cyan
-            {"val": nb_recovered, "col": C_RECOVERED, "emoji": "🛡️"},      # Yellow
-            
-            # GROUPE 2 : "SICK"
-            {"val": nb_exposed, "col": C_EXPOSED, "emoji": "🕰️"},           # Orange (Incubation)
-            {"val": nb_infected, "col": C_INFECTED, "emoji": "🦠"},         # Red (Virus instead of face)
-            
-            # GROUPE 3 : "DEAD"
-            {"val": nb_dead, "col": C_DEAD, "emoji": "💀"},                 # Black
-        ]
+        # Data (Keep needed visual logic vars)
+        nb_susceptible = sum(1 for p in population if p.state == "S")
+        nb_infected = sum(1 for p in population if p.state == "I")
+        nb_recovered = sum(1 for p in population if p.state == "R")
+        nb_vaccinated = sum(1 for p in population if p.state == "V")
+        nb_exposed = sum(1 for p in population if p.state == "E") # Used later
+        nb_dead = sum(1 for p in population if p.state == "D")    # Used later
         
+        total_live = nb_susceptible + nb_infected + nb_recovered + nb_vaccinated
+        if total_live == 0: total_live = 1
+        
+        # Colors 
+        col_sains = (40, 160, 60)
+        col_infecte = (180, 50, 50)
+        col_vaccine = (40, 120, 180)
+        col_gueri = (200, 160, 20)
+        
+        
+        # 2. LÉGENDE
+        leg_start_y = btn_stats.bottom + 25 # Moved up since Pie Chart is gone
+        # Font for legend
+        font_legend = pygame.font.SysFont("Segoe UI", 14, bold=True)
+        # Numbers font
+        font_leg_val = pygame.font.SysFont("Segoe UI", 14, bold=True)
+        
+        def draw_legend_item(x, y, color, label, val):
+            # Square
+            sq_size = 14
+            pygame.draw.rect(screen, color, (x, y, sq_size, sq_size), border_radius=3)
+            # Label
+            lbl = font_legend.render(label, True, WHITE)
+            screen.blit(lbl, (x + sq_size + 8, y - 2))
+            # Value (Grey)
+            v_s = font_leg_val.render(str(val), True, (150, 150, 160))
+            screen.blit(v_s, (x + sq_size + 8 + lbl.get_width() + 4, y - 2))
+
+        # Cols (Single Column)
+        col_x = sidebar_rect.left + 35
+        row_gap = 22
+        
+        draw_legend_item(col_x, leg_start_y,              col_sains, "Sains", nb_susceptible)
+        draw_legend_item(col_x, leg_start_y + row_gap*1,  col_infecte, "Infecté", nb_infected)
+        draw_legend_item(col_x, leg_start_y + row_gap*2,  col_vaccine, "Vacciné", nb_vaccinated)
+        draw_legend_item(col_x, leg_start_y + row_gap*3,  col_gueri, "Guéri", nb_recovered)
+        
+        last_legend_y = leg_start_y + row_gap*3
+
+        # 3. STATUTS SIMPLIFIÉS (Text + Emoji)
+        
+        stat_start_y = last_legend_y + 35
+        
+        # Helper Text
+        def draw_simple_stat(x, y, emoji, label, count, color_val):
+            # Emoji
+            emo = font_emoji.render(emoji, True, WHITE)
+            screen.blit(emo, (x, y))
+            
+            # Label
+            lbl = font_legend.render(label, True, WHITE)
+            # Position: Right of emoji
+            lbl_x = x + 30 
+            screen.blit(lbl, (lbl_x, y + 2))
+            
+            # Value ": X"
+            val_s = font_leg_val.render(f": {count}", True, color_val)
+            screen.blit(val_s, (lbl_x + lbl.get_width() + 2, y + 2))
+
+        # Incubation (Orange/Coral text for number to pop?)
+        # Use simple grey/white to match legend style or slightly colored.
+        # User said "Like legend", legend has Grey numbers. 
+        # But Incubation/Death is important. Let's use Light Grey/White.
+        
+        draw_simple_stat(col_x, stat_start_y, "🕰️", "En incubation", nb_exposed, (200, 200, 200))
+        
+        # Décès
+        draw_simple_stat(col_x, stat_start_y + 28, "💀", "Décès", nb_dead, (180, 50, 50)) # Red number for deaths? Or just grey? 
+        # Let's stick to Grey/White scaling. The user asked for "Like legend".
+        # Legend uses: (150, 150, 160)
+        # Let's use that.
+
         current_y = epi_y_start
         
-        for i, p in enumerate(params):
+        for i, p in enumerate([]): # Loop disabled for redesign
             # Ajout d'espaces entre les groupes
             # Groupe 2 commence à l'index 3 (S, V, R sont 0, 1, 2)
             if i == 3: 
@@ -620,41 +868,79 @@ while running:
         
         
         # --- VACCINATION UI ---
-        # 1. Bouton Principal (Toggle)
-        vac_col = (50, 160, 80) if vaccination_active else (70, 70, 75)
-        # Hover
-        if btn_vaccination.collidepoint(mouse_pos):
-             vac_col = [min(255, c+20) for c in vac_col]
+        # --- VACCINATION UI (3D Style) ---
         
-        pygame.draw.rect(screen, vac_col, btn_vaccination, border_radius=6)
-        # Texte
-        v_txt_str = "VACCINATION" # if vaccination_active else "VACCINATION"
-        v_txt = font_label.render(v_txt_str, True, WHITE)
-        screen.blit(v_txt, (btn_vaccination.centerx - v_txt.get_width()//2, btn_vaccination.centery - v_txt.get_height()//2))
+        # 1. Main Button (Toggle) - 3D
+        # Active: Green / Inactive: Grey
+        if vaccination_active:
+            c_vac_top = (50, 160, 80)
+            c_vac_bot = (30, 100, 50)
+        else:
+            c_vac_top = (70, 70, 75)
+            c_vac_bot = (50, 50, 55)
+            
+        vac_pressed = btn_vaccination.collidepoint(mouse_pos) and pygame.mouse.get_pressed()[0]
+        # Use our 3D logic
+        # We can reuse draw_3d_btn but it expects an icon string. 
+        # We want "VACCINATION" text.
+        # Let's inline the simplified 3D draw for text button.
         
-        # 2. Controls (+ / -)
+        depth = 6
+        v_offset = depth // 2 if vac_pressed else 0
+        
+        # Base
+        pygame.draw.rect(screen, c_vac_bot, (btn_vaccination.x, btn_vaccination.y + depth, btn_vaccination.width, btn_vaccination.height), border_radius=8)
+        # Top
+        vac_top_rect = pygame.Rect(btn_vaccination.x, btn_vaccination.y + v_offset, btn_vaccination.width, btn_vaccination.height)
+        pygame.draw.rect(screen, c_vac_top, vac_top_rect, border_radius=8)
+        
+        # Text
+        v_txt = font_label.render("VACCINATION", True, WHITE)
+        screen.blit(v_txt, (vac_top_rect.centerx - v_txt.get_width()//2, vac_top_rect.centery - v_txt.get_height()//2))
+        
+        
+        # 2. Controls (+ / -) and Display
         # Minus
-        m_col = BtnHoverColor if btn_doses_minus.collidepoint(mouse_pos) else BtnColor
-        pygame.draw.rect(screen, m_col, btn_doses_minus, border_radius=4)
-        m_txt = font_btn.render("-", True, WHITE)
-        screen.blit(m_txt, (btn_doses_minus.centerx - m_txt.get_width()//2, btn_doses_minus.centery - m_txt.get_height()//2))
+        minus_pressed = btn_doses_minus.collidepoint(mouse_pos) and pygame.mouse.get_pressed()[0]
+        draw_3d_btn(btn_doses_minus, (70, 70, 75), (50, 50, 55), "-", pressed=minus_pressed)
         
         # Plus
-        p_col = BtnHoverColor if btn_doses_plus.collidepoint(mouse_pos) else BtnColor
-        pygame.draw.rect(screen, p_col, btn_doses_plus, border_radius=4)
-        p_txt = font_btn.render("+", True, WHITE)
-        screen.blit(p_txt, (btn_doses_plus.centerx - p_txt.get_width()//2, btn_doses_plus.centery - p_txt.get_height()//2))
+        plus_pressed = btn_doses_plus.collidepoint(mouse_pos) and pygame.mouse.get_pressed()[0]
+        draw_3d_btn(btn_doses_plus, (70, 70, 75), (50, 50, 55), "+", pressed=plus_pressed)
         
-        # Number Display
-        # Entre les boutons - et +
-        # On peut dessiner un petit fond ou juste le texte
-        val_area_rect = pygame.Rect(btn_doses_minus.right, btn_doses_minus.top, btn_doses_plus.left - btn_doses_minus.right, btn_doses_minus.height)
+        # Number Display (3D Inset/Box style like Speed)
+        val_area_rect = pygame.Rect(btn_doses_minus.right + 10, btn_doses_minus.top, btn_doses_plus.left - btn_doses_minus.right - 20, btn_doses_minus.height)
+        
+        # Base (Shadow)
+        pygame.draw.rect(screen, (25, 25, 25), (val_area_rect.x, val_area_rect.y + 4, val_area_rect.width, val_area_rect.height), border_radius=6)
+        # Face (Top)
+        pygame.draw.rect(screen, (40, 40, 40), val_area_rect, border_radius=6)
+        
         val_txt = font_label.render(f"{daily_doses} /j", True, WHITE)
         screen.blit(val_txt, (val_area_rect.centerx - val_txt.get_width()//2, val_area_rect.centery - val_txt.get_height()//2))
         
 
-        # GRAPH (Teal) - En bas
-        draw_ctrl_btn(btn_graph, (0, 150, 150), "graph", active=show_graph)
+        # GRAPH (White 3D with Black Text)
+        c_graph_top = (255, 255, 255) 
+        c_graph_bot = (200, 200, 200)
+        
+        graph_pressed = btn_graph.collidepoint(mouse_pos) and pygame.mouse.get_pressed()[0]
+        
+        # 3D Logic
+        depth = 6
+        g_offset = depth // 2 if graph_pressed else 0
+        
+        # Base
+        base_rect_graph = pygame.Rect(btn_graph.x, btn_graph.y + depth, btn_graph.width, btn_graph.height)
+        pygame.draw.rect(screen, c_graph_bot, base_rect_graph, border_radius=10)
+        
+        # Top
+        top_rect_graph = pygame.Rect(btn_graph.x, btn_graph.y + g_offset, btn_graph.width, btn_graph.height)
+        pygame.draw.rect(screen, c_graph_top, top_rect_graph, border_radius=10)
+        
+        # Text "GRAPHE" (Black)
+        txt_graph = font_subtitle.render("GRAPHE", True, (20, 20, 20)) 
+        screen.blit(txt_graph, (top_rect_graph.centerx - txt_graph.get_width()//2, top_rect_graph.centery - txt_graph.get_height()//2))
 
     else:
         # FALLBACK (Old UI)
@@ -746,9 +1032,9 @@ while running:
             {"label": "SHOPPING", "value": str(nb_shoppers), "color": (100, 220, 120), "icon": "shop"},
         ]
 
-        card_h = 70
+        card_h = 45
         card_w = s_w - 40
-        gap = 15
+        gap = 8
 
         for i, card in enumerate(stats_cards):
             cy = y_cursor + (i * (card_h + gap))
@@ -819,7 +1105,7 @@ while running:
 
             # Textes (Centrage Vertical)
             lbl_s = font_label.render(card["label"], True, (180, 180, 190))
-            val_s = font_title.render(card["value"], True, WHITE)
+            val_s = font_value.render(card["value"], True, WHITE)
             
             total_text_h = lbl_s.get_height() + val_s.get_height()
             start_y = cy + (card_h - total_text_h) // 2
@@ -837,37 +1123,52 @@ while running:
         else:
             r0_val = 0.0
         
-        # Positionnement : En dessous des widgets stats, avec un espace
-        r0_y = y_cursor + (len(params) * (card_h + gap)) - 40 # Remonté (was + 20)
-        r0_rect = pygame.Rect(dx, r0_y, card_w, card_h)
+        # Positionnement : En dessous des widgets stats
+        # On le place sous le panneau "DÉCÉDÉS" (panel_dead_y + panel_h + 15)
+        # Mais on n'a pas accès facilement à ces variables locales ici car on est hors scope ?
+        # Wait, lines 1107 are seemingly further down in the file.
+        # Check if we are inside the same function scope.
+        # Actually this looks like it might be stray code or a second pass?
+        # Let's anchor it to btn_vaccination.top - 60 (above vaccination button) if possible?
+        # OR just under the last known element.
+        # Let's say relative to btn_stats.bottom + 300? No that's risky.
+        # Safest: relative to btn_vaccination.top - 80 
+        
+        # Positionnement : Relative to last card (Compact)
+        # 4 cards total. Cursor was at start y.
+        # last card y = y_cursor + 3*(card_h+gap)
+        # r0 should be below that.
+        last_card_bottom = y_cursor + (4 * (card_h + gap))
+        r0_y = last_card_bottom + 10 
+        r0_rect = pygame.Rect(curr_x + 20, r0_y, s_w - 40, 45)
         
         # Fond R0 (Un peu différent pour ressortir ?)
         pygame.draw.rect(screen, (55, 50, 65), r0_rect, border_radius=8)
         # Bordure gauche (Violet/Rose)
         r0_col = (200, 100, 200)
-        pygame.draw.rect(screen, r0_col, (dx, r0_y, 6, card_h), border_top_left_radius=8, border_bottom_left_radius=8)
+        pygame.draw.rect(screen, r0_col, (r0_rect.x, r0_rect.y, 6, r0_rect.height), border_top_left_radius=8, border_bottom_left_radius=8)
         
         # Icone Biohazard/Chart
-        ic_center = (dx + 35, r0_y + card_h//2)
+        # ic_center = (dx + 35, r0_y + card_h//2)
         emo_r0 = font_emoji.render("☣️", True, WHITE) # Biohazard
-        screen.blit(emo_r0, (dx + 25 - emo_r0.get_width()//2, r0_y + card_h//2 - emo_r0.get_height()//2))
+        screen.blit(emo_r0, (r0_rect.x + 25 - emo_r0.get_width()//2, r0_rect.centery - emo_r0.get_height()//2))
 
         # Texte
         lbl_r0 = font_label.render("TAUX R0", True, (180, 180, 190))
-        val_r0 = font_title.render(f"{r0_val:.2f}", True, WHITE)
+        val_r0 = font_value.render(f"{r0_val:.2f}", True, WHITE)
         
         # Centrage vertical text
         total_text_h_r0 = lbl_r0.get_height() + val_r0.get_height()
-        start_y_r0 = r0_y + (card_h - total_text_h_r0) // 2
+        start_y_r0 = r0_rect.y + (r0_rect.height - total_text_h_r0) // 2
         
-        screen.blit(lbl_r0, (dx + 70, start_y_r0))
-        screen.blit(val_r0, (dx + 70, start_y_r0 + lbl_r0.get_height() - 2))
+        screen.blit(lbl_r0, (r0_rect.x + 70, start_y_r0))
+        screen.blit(val_r0, (r0_rect.x + 70, start_y_r0 + lbl_r0.get_height() - 2))
 
         # --- GRAPH R0 ---
         # Zone Graph
         graph_h = 60
-        g_y = r0_y + card_h + 10
-        g_rect = pygame.Rect(dx, g_y, card_w, graph_h)
+        g_y = r0_rect.bottom + 10
+        g_rect = pygame.Rect(r0_rect.x, g_y, r0_rect.width, graph_h)
         
         # Fond Graph
         pygame.draw.rect(screen, (40, 40, 45), g_rect, border_radius=6)
@@ -912,8 +1213,8 @@ while running:
 
 
         # --- SIR TRENDS GRAPH (BIG) ---
-        # Position: Dessus R0 + 50px (More spacing)
-        sir_y = g_y + graph_h + 110 # Increased spacing from 90 to 110
+        # Position: Close below R0 Graph
+        sir_y = g_rect.bottom + 60 # Increased spacing as requested (was 30)
         sir_h = 100
         sir_rect = pygame.Rect(dx, sir_y, card_w, sir_h)
         
