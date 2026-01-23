@@ -75,9 +75,9 @@ class Map:
     def get_valid_spawn_point(self):
         """Distribue les places définies une par une"""
         if self.house_slots:
-            return self.house_slots.pop(0) # On prend la première dispo et on l'enlève
+            return self.house_slots.pop(0) 
         else:
-            # Sécurité si ta liste est plus courte que la population
+            # Sécurité
             return random.randint(20, self.width), random.randint(20, self.height)
 
     def add_house(self, x, y):

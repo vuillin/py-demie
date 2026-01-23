@@ -6,11 +6,11 @@ def generate_grass(width, height):
     """Génère un sol en damier uniforme et doux"""
     grass_tiles = []
     
-    # Taille fixe pour tous les carrés (60px est un bon équilibre)
+    # Taille fixe pour tous les tiles
     tile_size = 20
     
-    # On calcule combien de carrés il faut pour remplir la largeur et hauteur
-    # On ajoute +1 pour être sûr de couvrir les bords si la division n'est pas ronde
+    # calcule : combien de tiles pour remplir largeur et hauteur
+    # on ajoute +1 pour être sûr de couvrir les bords si la division n'est pas ronde
     cols = (width // tile_size) + 1
     rows = (height // tile_size) + 1
 
@@ -19,15 +19,13 @@ def generate_grass(width, height):
             x = col * tile_size
             y = row * tile_size
             
-            # --- LOGIQUE DU DAMIER ---
-            # Si la somme de la colonne et de la ligne est paire -> Couleur 1
-            # Sinon -> Couleur 2
+            # si la somme de la colonne et de la ligne est paire -> Couleur 1
+            # sinon -> Couleur 2
             if (col + row) % 2 == 0:
                 color = C_GRASS_1
             else:
                 color = C_GRASS_2
             
-            # On crée le rectangle
             rect = pygame.Rect(x, y, tile_size, tile_size)
             grass_tiles.append({"rect": rect, "color": color})
     return grass_tiles
@@ -35,11 +33,10 @@ def generate_grass(width, height):
 def generate_city_architecture(city_rect, city_w, city_h):
     city_elements = []
     
-    # On définit la grille : 5 colonnes (largeur) x 4 lignes (hauteur)
+    # définit la grille
     cols_count = 5
     rows_count = 4
     
-    # Taille d'un bloc (60px)
     block_w = city_w // cols_count
     block_h = city_h // rows_count
     padding = 5
@@ -49,16 +46,12 @@ def generate_city_architecture(city_rect, city_w, city_h):
             bx = city_rect.x + (col * block_w)
             by = city_rect.y + (row * block_h)
             
-            # Le rectangle de base du bloc
             rect = pygame.Rect(bx + padding, by + padding, block_w - 2*padding, block_h - 2*padding)
             
-            # --- LOGIQUE DE ZONAGE (Décalée vers la droite pour laisser la col 0 en immeubles) ---
-            
-            # PARC (En haut à droite) -> Était cols 2,3 -> Devient cols 3,4
             if row in [0, 1] and col in [3, 4]: 
-                # On ne crée le parc qu'une seule fois, au début du bloc "maître" (row 0, col 3)
+
                 if row == 0 and col == 3:
-                    # Le parc prend 2x2 blocs
+
                     park_rect = pygame.Rect(bx + padding, by + padding, (block_w*2) - 2*padding, (block_h*2) - 2*padding)
                     
                     park_details = {"trees": [], "pond": None, "paths": []}
@@ -77,17 +70,14 @@ def generate_city_architecture(city_rect, city_w, city_h):
                     
                     city_elements.append({"type": "park", "rect": park_rect, "color": (60, 160, 70), "details": park_details})
                 
-                # Si on est dans les autres cases du parc (0,4 ou 1,3 ou 1,4), on ne fait rien (le gros rect couvre tout)
                 continue 
 
-            # PLAZA (En bas, un peu à gauche mais pas tout au bord) -> Était cols 0,1 -> Devient cols 1,2
             elif row in [2, 3] and col in [1, 2]: 
                 if row == 2 and col == 1:
                     plaza_margin = 20
                     plaza_rect = pygame.Rect(bx + plaza_margin, by + plaza_margin, (block_w*2) - 2*plaza_margin, (block_h*2) - 2*plaza_margin)
                     plaza_details = {"tiles": [], "fountain_center": plaza_rect.center}
                     
-                    # Dallage
                     for tx in range(plaza_rect.left, plaza_rect.right, 10):
                         for ty in range(plaza_rect.top, plaza_rect.bottom, 10):
                             if (tx + ty) % 20 == 0: 
@@ -96,22 +86,20 @@ def generate_city_architecture(city_rect, city_w, city_h):
                     city_elements.append({"type": "plaza", "rect": plaza_rect, "color": (200, 190, 180), "details": plaza_details})
                 continue
 
-            # TOUT LE RESTE (Y compris la nouvelle colonne 0) -> IMMEUBLES
             else: 
                 v = random.randint(-20, 20)
                 color = (
                     max(0, min(255, C_BUILDING_BASE[0] + v)),
                     max(0, min(255, C_BUILDING_BASE[1] + v)),
-                    max(0, min(255, C_BUILDING_BASE[2] + v + 10)) # Un peu bleuté
+                    max(0, min(255, C_BUILDING_BASE[2] + v + 10)) 
                 )
 
                 windows = []
-                # Génération des fenêtres (Inchangé)
                 for wx in range(rect.left + 4, rect.right - 4, 10):
                     for wy in range(rect.top + 4, rect.bottom - 4, 10):
                         if random.random() < 0.8:
-                            win_color = (40, 40, 50) # Fenêtres sombres pour contraster
-                            if random.random() < 0.3: win_color = (255, 255, 200) # Lumière
+                            win_color = (40, 40, 50) 
+                            if random.random() < 0.3: win_color = (255, 255, 200)
                             windows.append({"rect": pygame.Rect(wx, wy, 6, 6), "color": win_color})
                 
                 city_elements.append({"type": "building", "rect": rect, "color": color, "details": {"windows": windows}})
@@ -124,7 +112,6 @@ def generate_fixed_supermarket(width, height):
     sm_rect = pygame.Rect(sx, sy, sm_w, sm_h)
     details = []
 
-    # 1. Sol Damier
     tile_size = 10
     for x in range(sx, sx + sm_w, tile_size):
         for y in range(sy, sy + sm_h, tile_size):
@@ -133,12 +120,9 @@ def generate_fixed_supermarket(width, height):
             h = min(tile_size, sy + sm_h - y)
             details.append({"shape": "rect", "color": col, "data": pygame.Rect(x, y, w, h)})
     
-    # 2. Murs extérieurs
     for r in [pygame.Rect(sx, sy, sm_w, 4), pygame.Rect(sx, sy + sm_h - 4, sm_w, 4), pygame.Rect(sx, sy, 4, sm_h), pygame.Rect(sx + sm_w - 4, sy, 4, sm_h)]:
         details.append({"shape": "rect", "color": C_SM_WALL, "data": r})
 
-    # 3. Rayons Verticaux (Gauche et Centre)
-    # On laisse de la place à droite pour les nouveaux rayons horizontaux
     limit_vertical = sx + sm_w - 70 
     current_x = sx + 15
     while current_x < limit_vertical:
@@ -147,27 +131,21 @@ def generate_fixed_supermarket(width, height):
              details.append({"shape": "rect", "color": (random.randint(100,255),random.randint(100,255),random.randint(100,255)), "data": pygame.Rect(current_x + 2, py, 8, 2)})
         current_x += 25 
 
-    # 4. NOUVEAU : Rayons Horizontaux (Zone Droite)
-    # On les empile verticalement
     right_zone_x = sx + sm_w - 55
     shelf_w_horiz = 40
     shelf_h_horiz = 10
-    for hy in range(sy + 15, sy + sm_h - 50, 20): # Ecartement de 20px
-        # L'étagère
+    for hy in range(sy + 15, sy + sm_h - 50, 20):
         details.append({"shape": "rect", "color": C_SM_SHELF, "data": pygame.Rect(right_zone_x, hy, shelf_w_horiz, shelf_h_horiz)})
-        # Les produits dessus (petits carrés alignés horizontalement)
         for px in range(right_zone_x + 2, right_zone_x + shelf_w_horiz - 2, 6):
             prod_col = (random.randint(100,255),random.randint(100,255),random.randint(100,255))
             details.append({"shape": "rect", "color": prod_col, "data": pygame.Rect(px, hy + 2, 4, 6)})
 
-    # 5. Caisses (5 caisses)
     for i in range(5):
         cx = sx + 30 + (i * 35)
         if cx + 25 < sx + sm_w:
             details.append({"shape": "rect", "color": C_SM_DESK, "data": pygame.Rect(cx, sy + sm_h - 35, 20, 12)})
             details.append({"shape": "rect", "color": C_SM_CHECKOUT, "data": pygame.Rect(cx + 2, sy + sm_h - 33, 16, 8)})
 
-    # 6. Entrées (Gauche et Droite)
     # Porte Gauche
     details.append({"shape": "rect", "color": (150, 200, 255), "data": pygame.Rect(sx, sy + sm_h // 2 - 15, 4, 30)})
     # Porte Droite
@@ -181,7 +159,6 @@ def generate_medical_center():
     mc_rect = pygame.Rect(mx, my, mc_w, mc_h)
     details = []
 
-    # 1. Sol
     for x in range(mx, mx + mc_w, 10):
         for y in range(my, my + mc_h, 10):
             col = C_MC_FLOOR if ((x - mx)//10 + (y - my)//10) % 2 == 0 else C_MC_FLOOR_ALT
@@ -189,13 +166,10 @@ def generate_medical_center():
             h = min(10, my + mc_h - y)
             details.append({"shape": "rect", "color": col, "data": pygame.Rect(x, y, w, h)})
     
-    # 2. Cloison interne
     partition_x = mx + mc_w - 60
     details.append({"shape": "rect", "color": C_MC_WALL, "data": pygame.Rect(partition_x, my, 3, mc_h - 30)})
 
-    # 3. Zone Gauche : Les Lits
     bed_w, bed_h = 20, 12
-    # On définit exactement où finissent les lits pour placer la croix après
     max_bed_x = 0 
     for col in range(2):
         for row in range(3):
@@ -205,26 +179,21 @@ def generate_medical_center():
             details.append({"shape": "rect", "color": C_MC_BED, "data": pygame.Rect(bx, by, bed_w, bed_h)})
             details.append({"shape": "rect", "color": WHITE, "data": pygame.Rect(bx, by + 1, 4, bed_h - 2)})
 
-    # 4. Zone Droite : Bureau
+   
     desk_x = partition_x + 15
     desk_y = my + 20
     details.append({"shape": "rect", "color": (100, 100, 100), "data": pygame.Rect(desk_x, desk_y, 30, 15)})
     details.append({"shape": "rect", "color": (50, 50, 50), "data": pygame.Rect(desk_x + 32, desk_y + 2, 8, 8)})
 
-    # 5. CORRECTION CROIX ROUGE
-    # On la place pile entre la fin des lits (max_bed_x) et le mur de séparation (partition_x)
-    # Et on la centre verticalement
     center_zone_x = (max_bed_x + partition_x) // 2
     center_zone_y = my + mc_h // 2
     
     details.append({"shape": "rect", "color": C_MC_CROSS, "data": pygame.Rect(center_zone_x - 5, center_zone_y - 15, 10, 30)})
     details.append({"shape": "rect", "color": C_MC_CROSS, "data": pygame.Rect(center_zone_x - 15, center_zone_y - 5, 30, 10)})
 
-    # 6. Salle d'attente
     for i in range(3):
         details.append({"shape": "rect", "color": C_MC_FURNITURE, "data": pygame.Rect(mx + mc_w - 15, my + mc_h - 40 + (i*10), 8, 8)})
 
-    # 7. Murs et Porte
     for r in [pygame.Rect(mx, my, mc_w, 3), pygame.Rect(mx, my + mc_h - 3, mc_w, 3), pygame.Rect(mx, my, 3, mc_h), pygame.Rect(mx + mc_w - 3, my, 3, mc_h)]:
         details.append({"shape": "rect", "color": C_MC_WALL, "data": r})
     details.append({"shape": "rect", "color": (150, 200, 255), "data": pygame.Rect(mx + mc_w - 40, my + mc_h - 3, 25, 3)})
@@ -272,27 +241,24 @@ def create_house_parts(x, y):
     style = random.choice([1, 2, 3])
     house_parts = [] 
     
-    # Dimensions communes
     door_w, door_h = HOUSE_SIZE // 3, HOUSE_SIZE // 2.5
     door_rect = pygame.Rect(hx + (HOUSE_SIZE-door_w)//2, hy + HOUSE_SIZE - door_h, door_w, door_h)
     
-    # Géométrie du toit plat (Une bande rectangle juste au dessus du corps)
-    # x-1 et width+2 pour dépasser légèrement sur les côtés (débord de toiture)
     roof_rect = pygame.Rect(hx - 1, hy - 3, HOUSE_SIZE + 2, 4)
 
-    if style == 1: # Style Beige (Toit plat Rouge)
+    if style == 1: # Style Beige 
         body = pygame.Rect(hx, hy, HOUSE_SIZE, HOUSE_SIZE)
         house_parts.append({"shape": "rect", "color": C_BEIGE, "data": body})
         house_parts.append({"shape": "rect", "color": C_RED, "data": roof_rect})
         house_parts.append({"shape": "rect", "color": C_WOOD, "data": door_rect})
 
-    elif style == 2: # Style Moderne Gris (Toit plat Foncé)
+    elif style == 2: # Style Gris 
         body = pygame.Rect(hx, hy, HOUSE_SIZE, HOUSE_SIZE)
         house_parts.append({"shape": "rect", "color": C_GREY, "data": body})
         house_parts.append({"shape": "rect", "color": C_DARK, "data": roof_rect})
         house_parts.append({"shape": "rect", "color": C_WOOD, "data": door_rect})
 
-    elif style == 3: # Style Brique (Toit plat Foncé)
+    elif style == 3: # Style Brique 
         body = pygame.Rect(hx, hy, HOUSE_SIZE, HOUSE_SIZE)
         house_parts.append({"shape": "rect", "color": C_BRICK, "data": body})
         house_parts.append({"shape": "rect", "color": C_DARK, "data": roof_rect})
