@@ -1,22 +1,22 @@
 
-# Dimensions du monde (Carte)
+# Dimensions de la carte
 WORLD_WIDTH = 1200 
 WORLD_HEIGHT = 800
 
 # Mode fenêtré par défaut
+# note thomas : Pas fou car ça dépend beaucoup de l'écran de la personne
+# à changer si possible
 DEFAULT_WINDOW_WIDTH = 900
 DEFAULT_WINDOW_HEIGHT = 600
 FPS = 60
 
-# Couleurs RGB
+# Couleurs 
 BLACK = (10, 10, 10)
 WHITE = (255, 255, 255)
-GRAY = (50, 50, 50)     # Obstacles
-ORANGE = (230, 120, 0)  # La ville (bordure)
-BLUE = (50, 100, 200)   # Homme
-PINK = (220, 100, 180)  # Femme
+GRAY = (50, 50, 50)     # obstacles
+ORANGE = (230, 120, 0)  # la ville (bordure)
+BLUE = (50, 100, 200)   # humain
 RED = (255, 50, 50)     
-C_WORKER = (255, 215, 0) # Gold (Travailleurs)
 ROAD_COLOR = (45, 45, 55)
 C_SIDEWALK = (170, 170, 170)
 ROAD_WIDTH = 20 
@@ -25,27 +25,27 @@ SIDEWALK_WIDTH = 4
 BG_COLOR = (20, 20, 25) 
 
 
-# --- VILLE & ARCHITECTURE ---
+# VILLE 
 C_CITY_GROUND = (171, 171, 171) 
 C_CITY_BORDER = (120, 120, 130)
 C_BUILDING_BASE = (170, 170, 180) 
 C_BUILDING_VAR  = 40              
 
-# --- PALETTE DE COULEURS MAISONS ---
+# COULEURS MAISONS
 C_BEIGE = (230, 210, 170)
 C_BRICK = (160, 80, 60)
 C_GREY  = (180, 180, 190)
 C_DARK  = (50, 50, 60)
 C_RED   = (180, 60, 60)
-C_BLUE  = (100, 180, 220) # Pour les vitres
-C_WOOD  = (100, 70, 40)   # Pour les portes
+C_BLUE  = (100, 180, 220) #  vitres
+C_WOOD  = (100, 70, 40)   # portes
 HOUSE_SIZE = 14 
 
-# --- DECOR HERBE ---
+# HERBE
 C_GRASS_1 = (120, 160, 120)
 C_GRASS_2 = (110, 150, 110)
 
-# --- SUPERMARCHÉ ---
+# SUPERMARCHÉ 
 C_SM_WALL = (100, 120, 140)  
 C_SM_ROOF = (70, 80, 90)     
 C_SM_GLASS = (160, 210, 250) 
@@ -58,7 +58,7 @@ C_SM_CHECKOUT = (40, 40, 40)
 C_SM_DESK = (180, 180, 190)   
 SM_SIZE = (220, 140) 
 
-# --- CENTRE MÉDICAL ---
+# CENTRE MÉDICAL
 MC_SIZE = (160, 110)          
 C_MC_FLOOR = (255, 255, 255)
 C_MC_FLOOR_ALT = (240, 240, 240)
@@ -67,7 +67,7 @@ C_MC_CROSS = (230, 60, 60)
 C_MC_BED = (100, 200, 220)    
 C_MC_FURNITURE = (200, 200, 210)
 
-# --- COMPLEXE SPORTIF ---
+# COMPLEXE SPORTIF 
 SC_SIZE = (180, 140)
 C_SC_GROUND = (200, 200, 200)   
 C_SC_TRACK = (205, 92, 92)      
@@ -78,13 +78,13 @@ C_SC_WATER = (30, 144, 255)
 C_SC_LANE = (100, 180, 255)     
 C_SC_SEATS = (100, 100, 120)    
 
-# --- VÉGÉTATION ---
+#  VÉGÉTATION 
 # Arbre Type 1
 TREE_1_RADIUS = 10
 C_TREE_1_TOP = (60, 180, 60)
 C_TREE_1_BASE = (30, 120, 30)
 
-# Arbre Type 2 (Sombre - Type Pin/Sapin)
+# Arbre Type 2
 TREE_2_RADIUS = 10
 C_TREE_2_TOP = (40, 100, 50)   
 C_TREE_2_BASE = (30, 80, 40) 
@@ -95,13 +95,15 @@ C_BUSH_MAIN = (100, 180, 40)
 C_BUSH_LIGHT = (140, 220, 80)
 
 # Parterre de Fleurs
+# note : pas utilisé sur la carte mais je le laisse au cas ou
 FLOWERBED_SIZE = (24, 12)      
 C_SOIL = (100, 70, 40)         
 C_FLOWER_RED = (200, 50, 50)
 C_FLOWER_YEL = (220, 220, 50)
 C_FLOWER_PRP = (150, 50, 150)
 
-# --- BOSQUETS (Groupes d'arbres) ---
+# BOSQUETS
+# pareil, plus utilisé 
 C_FOREST_FLOOR = (25, 55, 30)
 C_TREE_DEEP   = (20, 60, 30)
 C_TREE_MID    = (40, 90, 40)
@@ -109,23 +111,23 @@ C_TREE_BRIGHT = (60, 110, 50)
 GROVE_TREE_COUNT = 6 
 GROVE_SPREAD = 20      
 
-# Paramètres de la simulation 
+# paramètres de la simulation 
 POPULATION_SIZE = 213
 FRAGILITY_RATE = 0.05
 BASE_CLOCK_SPEED = 0.005  
 BASE_WALK_SPEED = 1
 HOUSE_MARGIN = 5
 
-# --- EPIDEMIC SETTINGS ---
-EPI_RADIUS = 20          # Distance de transmission
-EPI_PROBABILITY = 0.0025  # Probabilité par frame de contact (0.5%)
-EPI_INCUBATION = 3       # Jours avant de devenir contagieux/malade
-EPI_DURATION = 10        # Jours de maladie
+# SETTINGS
+EPI_RADIUS = 20          # distance de transmission
+EPI_PROBABILITY = 0.0025  # probabilité par frame de contact (0.5%)
+EPI_INCUBATION = 3       # jours avant de devenir contagieux/malade
+EPI_DURATION = 10        # jours de maladie
 EPI_MORTALITY = 0.03     # 3% de chance de mourir
 
 # Couleurs États
-C_EXPOSED     = (255, 150, 150) # Rouge très clair (Incubation)
-C_INFECTED    = (230, 40, 40)  # Rouge (Malade)
-C_RECOVERED   = (255, 215, 0)  # Jaune (Guéri)
-C_VACCINATED  = (0, 255, 255)  # Cyan (Vacciné)
-C_DEAD        = (30, 30, 30)   # Noir/Gris
+C_EXPOSED     = (255, 150, 150) 
+C_INFECTED    = (230, 40, 40)  
+C_RECOVERED   = (255, 215, 0)  
+C_VACCINATED  = (0, 255, 255)  
+C_DEAD        = (30, 30, 30)   
