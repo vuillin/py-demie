@@ -3,7 +3,7 @@ import heapq
 
 class NavigationGraph:
     def __init__(self):
-        # Noeuds
+        # noeuds du graphe
         self.nodes = {
             "A": (596, 311),
             "B": (747, 431),
@@ -106,7 +106,7 @@ class NavigationGraph:
     def _build_graph(self):
         for n1, n2 in self.connections:
             d = self._dist(self.nodes[n1], self.nodes[n2])
-            # C'est une route à double sens, on ajoute dans les deux directions
+            # c'est une route à double sens, on ajoute dans les deux directions
             self.graph[n1][n2] = d
             self.graph[n2][n1] = d
 
@@ -124,56 +124,56 @@ class NavigationGraph:
         return closest_node
 
     def get_shortest_path(self, start_node, end_node):
-        # Dijkstra
+        # dijkstra
         queue = [(0, start_node)]
         distances = {node: float('inf') for node in self.nodes}
         distances[start_node] = 0
-        came_from = {node: None for node in self.nodes} # Pour reconstruire le chemin
+        came_from = {node: None for node in self.nodes} # pour reconstruire le chemin
 
         while queue:
             current_dist, current_node = heapq.heappop(queue)
 
-            # Si on est arrivé, on arrête
+            # si on est arrivé, on arrête
             if current_node == end_node:
                 break
 
-            # Si on a trouvé un chemin plus long que ce qu'on connait déjà, on ignore
+            # si on a trouvé un chemin plus long que ce qu'on connait déjà, on ignore
             if current_dist > distances[current_node]:
                 continue
 
-            # On regarde les voisins
+            # on regarde les voisins
             for neighbor, weight in self.graph[current_node].items():
                 distance = current_dist + weight
                 
-                # Si on a trouvé un raccourci vers ce voisin
+                # si on a trouvé un raccourci vers ce voisin
                 if distance < distances[neighbor]:
                     distances[neighbor] = distance
                     came_from[neighbor] = current_node
                     heapq.heappush(queue, (distance, neighbor))
 
-        # Reconstruction du chemin (en partant de la fin)
+        # reconstruction du chemin (en partant de la fin)
         path = []
         curr = end_node
         if came_from[curr] is None and curr != start_node:
-            return [] # Pas de chemin trouvé (impossible ici mais bon)
+            return [] # pas de chemin trouvé (impossible ici mais bon)
             
         while curr:
-            path.append(self.nodes[curr]) # On ajoute les coordonnées
+            path.append(self.nodes[curr]) # on ajoute les coordonnées
             curr = came_from[curr]
         
-        path.reverse() # On remet dans le bon sens
+        path.reverse() # on remet dans le bon sens
         return path
 
     def calculate_route(self, start_pos, end_pos):
-        # Calcul itinéraire complet
-        # 1. Trouver l'entrée et la sortie du réseau
+        # calcul itinéraire complet
+        # 1.trouver l'entrée et la sortie du réseau
         node_entry = self.get_closest_node(start_pos)
         node_exit = self.get_closest_node(end_pos)
 
-        # 2. Calculer le chemin sur le réseau
+        # 2. calculer le chemin sur le réseau
         network_path = self.get_shortest_path(node_entry, node_exit)
 
-        # Assemblage
+        # assemblage
         full_route = []
 
         full_route.extend(network_path)
