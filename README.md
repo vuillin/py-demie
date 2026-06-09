@@ -1,4 +1,4 @@
-# Py-Démie
+# Py-Démie - Projet académique - IUT NFC 2025
 
 ## Présentation
 Py-Démie est un simulateur d'épidémie interactif développé en Python avec Pygame. Il modélise la propagation d'un virus au sein d'une population autonome évoluant dans une ville virtuelle.
@@ -7,12 +7,11 @@ Py-Démie est un simulateur d'épidémie interactif développé en Python avec P
 
 
 ## Installation et Lancement
-1.  Assurez-vous d'avoir Python installé.
-2.  Installez la dépendance Pygame :
+1.  Installer la dépendance Pygame :
     ```bash
     pip install pygame
     ```
-3.  Lancez la simulation :
+2.  Lancer la simulation :
     ```bash
     python main.py
     ```
